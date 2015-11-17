@@ -50,7 +50,7 @@ class AlignmentNode:
 class Aligner:
     def __init__(self, beam_size, sub_cost, ins_cost, del_cost):
         assert beam_size > 0, "beam_size must be > 0"
-        
+
         self.beam_size = beam_size
         self.sub_cost = sub_cost
         self.ins_cost = ins_cost
