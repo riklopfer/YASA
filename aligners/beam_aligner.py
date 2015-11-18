@@ -2,10 +2,9 @@
 beam_aligner
 Author: Russell Klopfer
 """
-import heapq
 
 
-class Alignment:
+class Alignment(object):
     def __init__(self, final_node, source_seq, target_seq):
         """
         Construct a new alignment from the given parameters.
@@ -61,7 +60,7 @@ class AlignmentType:
     DEL = "DEL"
 
 
-class AlignmentNode:
+class AlignmentNode(object):
     def __init__(self, align_type, previous, source_pos, target_pos, cost):
         """
 
@@ -105,14 +104,7 @@ class AlignmentNode:
             self.align_type, self.sourcePos, self.targetPos, self.cost)
 
 
-def print_heap(heap):
-    print "HEAP ({}) [[[".format(len(heap))
-    for n in heap:
-        print n
-    print "]]]"
-
-
-class Aligner:
+class Aligner(object):
     START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
 
     def __init__(self, beam_size, sub_cost=.9, ins_cost=1, del_cost=1):
@@ -133,6 +125,31 @@ class Aligner:
         self.ins_cost = ins_cost
         self.del_cost = del_cost
 
+    @staticmethod
+    def __print_heap(heap, n=None):
+        """
+        Prints the top-n elements of the heap.
+
+        :param heap:
+        :param n:
+        :return: None
+        """
+        n = len(heap) if n is None else min(n, len(heap))
+        print "HEAP ({}) [[[".format(len(heap))
+        for i in xrange(n):
+            print heap[i]
+        print "]]]"
+
+    @staticmethod
+    def __add_new_node(node_list, node):
+        node_list.append(node)
+        # heapq.heappush(node_list, node)
+
+    def __prune(self, node_list):
+        return sorted(node_list, key=lambda node: node.cost)[:min(self.beam_size, len(node_list))]
+        # return heapq.nsmallest(self.beam_size, node_list)
+        # return node_list[:min(self.beam_size, len(node_list))]
+
     def align(self, source, target):
         """
 
@@ -144,15 +161,15 @@ class Aligner:
         heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
-            # print_heap(heap)
-            next_heap = []
+            # Aligner.__print_heap(heap, 10)
+            node_list = []
             for node in heap:
-                self.__populate_nodes(next_heap, node, source, target)
-            heap = next_heap[:min(self.beam_size, len(next_heap))]
+                self.__populate_nodes(node_list, node, source, target)
+            heap = self.__prune(node_list)
 
         return Alignment(heap[0], source, target)
 
-    def __populate_nodes(self, heap, previous_node, source, target):
+    def __populate_nodes(self, node_list, previous_node, source, target):
         source_x = previous_node.sourcePos
         target_x = previous_node.targetPos
         cost = previous_node.cost
@@ -171,22 +188,22 @@ class Aligner:
 
         # we're at the end of the source sequence, this must be an insertion
         if source_x >= len(source) - 1:
-            heapq.heappush(heap, insertion())
+            Aligner.__add_new_node(node_list, insertion())
             return
 
         # we're at the end of the target sequence, this must be a deletion
         if target_x >= len(target) - 1:
-            heapq.heappush(heap, deletion())
+            Aligner.__add_new_node(node_list, deletion())
             return
 
         # match
         if source[source_x + 1] == target[target_x + 1]:
-            heapq.heappush(heap, match())
+            Aligner.__add_new_node(node_list, match())
         # sub
         else:
-            heapq.heappush(heap, substitution())
+            Aligner.__add_new_node(node_list, substitution())
 
         # always allow for insertions
-        heapq.heappush(heap, insertion())
+        Aligner.__add_new_node(node_list, insertion())
         # and deletions
-        heapq.heappush(heap, deletion())
+        Aligner.__add_new_node(node_list, deletion())
