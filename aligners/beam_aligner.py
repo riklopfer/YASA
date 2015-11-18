@@ -161,7 +161,7 @@ class Aligner(object):
         heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
-            # Aligner.__print_heap(heap, 10)
+            # Aligner.__print_heap(heap)
             node_list = []
             for node in heap:
                 self.__populate_nodes(node_list, node, source, target)

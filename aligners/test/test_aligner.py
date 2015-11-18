@@ -84,9 +84,9 @@ def __param_search(source, target, pretty=False):
 
 
 def woodchuck_test():
-    print "-"*20
+    print "-" * 20
     print "Woodchuck Test"
-    print "-"*20
+    print "-" * 20
     source = __get_words("how many chucks could a wood chuck")
     target = __get_words("wood chucks are nice animals -- although they will dig holes in your garden. " +
                          "how many chucks could a wood chuck if a wood chuck could chuck wood")
@@ -94,13 +94,16 @@ def woodchuck_test():
     __param_search(source, target, False)
 
 
-def test_all():
-    test_aligner(1, "ax", "abc")
-    test_aligner(5, "args", "largo")
-    test_aligner(4, "this are an test", "this is a test")
-    test_aligner(200, __get_words("how many chucks could a wood chuck"),
-                 __get_words("if a wood chuck could chuck wood"))
+def short_prefix_test():
+    source = __get_words("this is a test")
+    target = __get_words("sailing upwind is difficult") + source
 
+    beam_size = 3 ** int(max(len(source), len(target)) / 2)
+    test_aligner(beam_size, source, target, True)
+
+
+def test_all():
+    short_prefix_test()
     woodchuck_test()
 
     # big_word_test()
