@@ -21,13 +21,16 @@ class Alignment:
         return self.pairs[align_x][0]
 
     def __str__(self):
-        ret_value = "source={}, target={}, cost={}".format(self.source, self.target, self.cost)
+        return "len(source)={}, len(target)={}, cost={}".format(len(self.source), len(self.target), self.cost)
+
+    def pretty_print(self):
+        pretty = self.__str__()
         for pair in self.pairs:
             (source_x, target_x) = pair
             source_token = "" if source_x < 0 else self.source[source_x]
             target_token = "" if target_x < 0 else self.target[target_x]
-            ret_value += "{:<30}{:>30}\n".format(source_token, target_token)
-        return ret_value
+            pretty += "{:<30}{:>30}\n".format(source_token, target_token)
+        return pretty
 
 
 class AlignmentNode:
@@ -48,7 +51,7 @@ class AlignmentNode:
 
 
 class Aligner:
-    def __init__(self, beam_size, sub_cost, ins_cost, del_cost):
+    def __init__(self, beam_size, sub_cost=1, ins_cost=2, del_cost=2):
         assert beam_size > 0, "beam_size must be > 0"
 
         self.beam_size = beam_size
