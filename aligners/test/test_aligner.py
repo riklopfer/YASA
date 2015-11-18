@@ -3,12 +3,13 @@ import time
 import random
 import re
 
+
 # random.seed(98723432)
 
 
 def test_aligner(beam_size, source, target, pretty=True):
     print "beam_size={}".format(beam_size)
-    aligner = aligners.beam_aligner.Aligner(beam_size)
+    aligner = aligners.beam_aligner.Aligner(beam_size, .9, 1, 1)
     t0 = time.clock()
     alignment = aligner.align(source, target)
     print "Finished alignment in {}ms".format((time.clock() - t0) * 1000)
@@ -36,7 +37,7 @@ def __load_declaration(n=1):
     fp = open('declaration.txt')
     text = fp.read()
     fp.close()
-    return text*n
+    return text * n
 
 
 def __del_some(tokens, frac=0.1):
@@ -48,29 +49,6 @@ def __del_some(tokens, frac=0.1):
             i += 1
 
 
-def big_word_test():
-    text = __load_declaration(100)
-    target = __get_words(text)
-    source = __get_words(text)
-    # random.shuffle(source)
-    __del_some(source)
-    # __del_some(target)
-
-    for beam_size in xrange(0, 50, 10):
-        beam_size = beam_size if beam_size > 0 else 1
-        test_aligner(beam_size, source, target, False)
-
-
-def big_char_test():
-    text = __load_declaration()
-    source = [c for c in text]
-    target = [c for c in text]
-    jumble(source)
-
-    for beam_size in xrange(0, 50, 10):
-        test_aligner(beam_size, source, target, False)
-
-
 def __get_words(text):
     return re.split("\s+", text)
 
@@ -79,14 +57,56 @@ def __get_chars(text):
     return [c for c in text]
 
 
+def big_word_test():
+    text = __load_declaration(100)
+    target = __get_words(text)
+    source = __get_words(text)
+    # random.shuffle(source)
+    __del_some(source)
+    # __del_some(target)
+
+    __param_search(source, target)
+
+
+def big_char_test():
+    text = __load_declaration()
+    source = [c for c in text]
+    target = [c for c in text]
+    jumble(source)
+
+    __param_search(source, target)
+
+
+def __param_search(source, target, pretty=False):
+    for beam_size in xrange(0, 55, 10):
+        beam_size = beam_size if beam_size > 0 else 1
+        test_aligner(beam_size, source, target, pretty)
+
+
+def woodchuck_test():
+    print "-"*20
+    print "Woodchuck Test"
+    print "-"*20
+    source = __get_words("how many chucks could a wood chuck")
+    target = __get_words("wood chucks are nice animals -- although they will dig holes in your garden. " +
+                         "how many chucks could a wood chuck if a wood chuck could chuck wood")
+    test_aligner(50000, source, target, True)
+    __param_search(source, target, False)
+
+
 def test_all():
     test_aligner(1, "ax", "abc")
     test_aligner(5, "args", "largo")
-    test_aligner(4, __get_chars("this are an test"), __get_chars("this is a test"))
-    test_aligner(200, "how many chucks could a wood chuck".split(" "), "if a wood chuck could chuck wood".split(" "))
-    big_word_test()
+    test_aligner(4, "this are an test", "this is a test")
+    test_aligner(200, __get_words("how many chucks could a wood chuck"),
+                 __get_words("if a wood chuck could chuck wood"))
+
+    woodchuck_test()
+
+    # big_word_test()
     # big_char_test()
 
 
 if __name__ == '__main__':
+    # woodchuck_test()
     test_all()
