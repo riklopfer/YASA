@@ -3,46 +3,71 @@ import heapq
 
 class Alignment:
     def __init__(self, final_node, source, target):
-        self.pairs = []
+        self.nodes = final_node.flatten()
+        self.nodes.reverse()
+
         self.source = source
         self.target = target
         self.cost = final_node.cost
 
-        node = final_node
-        while node != Aligner.START_NODE:
-            self.pairs.append((node.sourcePos, node.targetPos))
-            node = node.previous
-        self.pairs.reverse()
-
     def size(self):
-        return len(self.pairs)
+        return len(self.nodes)
 
     def get_source(self, align_x):
-        return self.source[self.pairs[align_x][0]]
+        return self.source[self.nodes[align_x].sourcePos]
 
     def get_target(self, align_x):
-        return self.target[self.pairs[align_x][1]]
+        return self.target[self.nodes[align_x].targetPos]
+
+    def get_type(self, align_x):
+        return self.nodes[align_x].align_type
 
     def __str__(self):
-        return "len(source)={}, len(target)={}, cost={}".format(len(self.source), len(self.target), self.cost)
+        return ("size={} len(source)={}, len(target)={}, cost={}"
+                .format(self.size(), len(self.source), len(self.target), self.cost)
+                )
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
-            pretty += "{:<30}{:>30}\n".format(self.get_source(i), self.get_target(i))
+            pretty += "{:<30}{:^10}{:>30}\n".format(self.get_source(i), self.get_type(i), self.get_target(i))
         return pretty
 
 
+class AlignmentType:
+    def __init__(self):
+        assert False, "Cannot instantiate this 'enum' type"
+
+    START = "START"
+    MATCH = "MATCH"
+    SUB = "SUB"
+    INS = "INS"
+    DEL = "DEL"
+
+
 class AlignmentNode:
-    def __init__(self, previous, source_pos, target_pos, cost):
+    def __init__(self, align_type, previous, source_pos, target_pos, cost):
         """
 
         :rtype: AlignmentNode
         """
+        self.align_type = align_type
         self.previous = previous
         self.cost = cost
         self.sourcePos = source_pos
         self.targetPos = target_pos
+
+    def flatten(self):
+        """
+        Flatten the linked nodes into a list.
+        :return:
+        """
+        flat = []
+        current = self
+        while current != Aligner.START_NODE:
+            flat.append(current)
+            current = current.previous
+        return flat
 
     def __eq__(self, other):
         return (
@@ -59,11 +84,12 @@ class AlignmentNode:
         return self.cost <= other.cost
 
     def __str__(self):
-        return "{source_pos: %d, target_pos: %d, cost: %d}" % (self.sourcePos, self.targetPos, self.cost)
+        return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
+            self.align_type, self.sourcePos, self.targetPos, self.cost)
 
 
 class Aligner:
-    START_NODE = AlignmentNode(None, -1, -1, 0)
+    START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
 
     def __init__(self, beam_size, sub_cost=1, ins_cost=2, del_cost=2):
         assert beam_size > 0, "beam_size must be > 0"
@@ -89,20 +115,29 @@ class Aligner:
         target_x = previous_node.targetPos
         cost = previous_node.cost
 
+        # we're at the end of the source sequence, this must be an insertion
         if source_x >= len(source) - 1:
-            heapq.heappush(heap, AlignmentNode(previous_node, source_x, target_x + 1, cost + self.ins_cost))
+            heapq.heappush(heap, AlignmentNode(AlignmentType.INS, previous_node, source_x, target_x + 1,
+                                               cost + self.ins_cost))
             return
 
+        # we're at the end of the target sequence, this must be a deletion
         if target_x >= len(target) - 1:
-            heapq.heappush(heap, AlignmentNode(previous_node, source_x + 1, target_x, cost + self.del_cost))
+            heapq.heappush(heap, AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1, target_x,
+                                               cost + self.del_cost))
             return
 
+        # match
         if source[source_x + 1] == target[target_x + 1]:
-            heapq.heappush(heap, AlignmentNode(previous_node, source_x + 1, target_x + 1, cost))
+            heapq.heappush(heap, AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1, target_x + 1, cost))
+        # sub
         else:
-            heapq.heappush(heap, AlignmentNode(previous_node, source_x + 1, target_x + 1, cost + self.sub_cost))
+            heapq.heappush(heap, AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1,
+                                               cost + self.sub_cost))
 
         # always allow for insertions
-        heapq.heappush(heap, AlignmentNode(previous_node, source_x, target_x + 1, cost + self.ins_cost))
+        heapq.heappush(heap,
+                       AlignmentNode(AlignmentType.INS, previous_node, source_x, target_x + 1, cost + self.ins_cost))
         # and deletions
-        heapq.heappush(heap, AlignmentNode(previous_node, source_x + 1, target_x, cost + self.del_cost))
+        heapq.heappush(heap,
+                       AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1, target_x, cost + self.del_cost))
