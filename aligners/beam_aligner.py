@@ -14,22 +14,22 @@ class Alignment:
             node = node.previous
         self.pairs.reverse()
 
-    def get_source_x(self, align_x):
-        return self.pairs[align_x][0]
+    def size(self):
+        return len(self.pairs)
 
-    def get_target_x(self, align_x):
-        return self.pairs[align_x][1]
+    def get_source(self, align_x):
+        return self.source[self.pairs[align_x][0]]
+
+    def get_target(self, align_x):
+        return self.target[self.pairs[align_x][1]]
 
     def __str__(self):
         return "len(source)={}, len(target)={}, cost={}".format(len(self.source), len(self.target), self.cost)
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
-        for pair in self.pairs:
-            (source_x, target_x) = pair
-            source_token = "" if source_x < 0 else self.source[source_x]
-            target_token = "" if target_x < 0 else self.target[target_x]
-            pretty += "{:<30}{:>30}\n".format(source_token, target_token)
+        for i in xrange(self.size()):
+            pretty += "{:<30}{:>30}\n".format(self.get_source(i), self.get_target(i))
         return pretty
 
 
