@@ -23,3 +23,8 @@ char_alignment = aligner.align(source, target)
 print char_alignment.pretty_print()
 ```
 
+### Run some tests
+
+```bash
+python -c 'import aligners.test; aligners.test.run()'
+```

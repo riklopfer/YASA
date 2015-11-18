@@ -7,6 +7,15 @@ import heapq
 
 class Alignment:
     def __init__(self, final_node, source_seq, target_seq):
+        """
+        Construct a new alignment from the given parameters.
+
+        :param final_node:
+        :param source_seq:
+        :param target_seq:
+        :return:
+        :rtype: Alignment
+        """
         self.nodes = final_node.flatten()
         self.nodes.reverse()
 
