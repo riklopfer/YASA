@@ -1,3 +1,7 @@
+"""
+beam_aligner
+Author: Russell Klopfer
+"""
 import heapq
 
 
@@ -103,6 +107,16 @@ class Aligner:
     START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
 
     def __init__(self, beam_size, sub_cost=.9, ins_cost=1, del_cost=1):
+        """
+        Construct a new aligner with the given parameters.
+
+        :param beam_size: keep the N-best alignments at each position
+        :param sub_cost: cost of substituting one token for another
+        :param ins_cost: cost of inserting a token (something in target that isn't in source)
+        :param del_cost: cost of deleting a token (something in source that isn't in target)
+        :return: a new Aligner object
+        :rtype: Aligner
+        """
         assert beam_size > 0, "beam_size must be > 0"
 
         self.beam_size = beam_size
@@ -111,6 +125,13 @@ class Aligner:
         self.del_cost = del_cost
 
     def align(self, source, target):
+        """
+
+        :param source:
+        :param target:
+        :return:
+        :rtype: Alignment
+        """
         heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
