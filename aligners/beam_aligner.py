@@ -9,7 +9,7 @@ class Alignment:
         self.cost = final_node.cost
 
         node = final_node
-        while node is not None:
+        while node != Aligner.START_NODE:
             self.pairs.append((node.sourcePos, node.targetPos))
             node = node.previous
         self.pairs.reverse()
@@ -18,13 +18,13 @@ class Alignment:
         return self.pairs[align_x][0]
 
     def get_target_x(self, align_x):
-        return self.pairs[align_x][0]
+        return self.pairs[align_x][1]
 
     def __str__(self):
         return "len(source)={}, len(target)={}, cost={}".format(len(self.source), len(self.target), self.cost)
 
     def pretty_print(self):
-        pretty = self.__str__()
+        pretty = self.__str__() + "\n"
         for pair in self.pairs:
             (source_x, target_x) = pair
             source_token = "" if source_x < 0 else self.source[source_x]
@@ -35,10 +35,22 @@ class Alignment:
 
 class AlignmentNode:
     def __init__(self, previous, source_pos, target_pos, cost):
+        """
+
+        :rtype: AlignmentNode
+        """
         self.previous = previous
         self.cost = cost
         self.sourcePos = source_pos
         self.targetPos = target_pos
+
+    def __eq__(self, other):
+        return (
+            self.previous == other.previous and
+            self.cost == other.cost and
+            self.sourcePos == other.sourcePos and
+            self.targetPos == other.targetPos
+        )
 
     def __lt__(self, other):
         return self.cost < other.cost
@@ -51,6 +63,8 @@ class AlignmentNode:
 
 
 class Aligner:
+    START_NODE = AlignmentNode(None, -1, -1, 0)
+
     def __init__(self, beam_size, sub_cost=1, ins_cost=2, del_cost=2):
         assert beam_size > 0, "beam_size must be > 0"
 
@@ -60,7 +74,7 @@ class Aligner:
         self.del_cost = del_cost
 
     def align(self, source, target):
-        heap = [AlignmentNode(None, -1, -1, 0)]
+        heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
             next_heap = []
