@@ -42,10 +42,10 @@ class Alignment(object):
     def pretty_print(self):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
-            type = self.get_type(i)
-            source = '' if type == AlignmentType.INS else self.get_source(i)
-            target = '' if type == AlignmentType.DEL else self.get_target(i)
-            pretty += "{:<30}{:^10}{:>30}\n".format(source, type, target)
+            a_type = self.get_type(i)
+            source = '' if a_type == AlignmentType.INS else self.get_source(i)
+            target = '' if a_type == AlignmentType.DEL else self.get_target(i)
+            pretty += "{:<30}{:^10}{:>30}\n".format(source, a_type, target)
         return pretty
 
 
@@ -85,6 +85,12 @@ class AlignmentNode(object):
             current = current.previous
         return flat
 
+    def is_source_end(self, source):
+        return self.sourcePos >= len(source) - 1
+
+    def is_target_end(self, target):
+        return self.targetPos >= len(target) - 1
+
     def __eq__(self, other):
         return (
             self.previous == other.previous and
@@ -105,13 +111,14 @@ class AlignmentNode(object):
 
 
 class Aligner(object):
+    # Constants
     START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
+    MAX_BEAM_SIZE = 50000
 
-    def __init__(self, beam_size, sub_cost=.9, ins_cost=1, del_cost=1):
+    def __init__(self, beam_size, sub_cost=1, ins_cost=1, del_cost=1):
         """
         Construct a new aligner with the given parameters.
 
-        :param beam_size: keep the N-best alignments at each position
         :param sub_cost: cost of substituting one token for another
         :param ins_cost: cost of inserting a token (something in target that isn't in source)
         :param del_cost: cost of deleting a token (something in source that isn't in target)
@@ -119,11 +126,14 @@ class Aligner(object):
         :rtype: Aligner
         """
         assert beam_size > 0, "beam_size must be > 0"
-
         self.beam_size = beam_size
         self.sub_cost = sub_cost
         self.ins_cost = ins_cost
         self.del_cost = del_cost
+
+    def __str__(self):
+        return ("beam_size: {}, sub_cost: {}, ins_cost: {}, del_cost: {}".
+                format(self.beam_size, self.sub_cost, self.ins_cost, self.del_cost))
 
     @staticmethod
     def __print_heap(heap, n=None):
@@ -143,12 +153,10 @@ class Aligner(object):
     @staticmethod
     def __add_new_node(node_list, node):
         node_list.append(node)
-        # heapq.heappush(node_list, node)
 
-    def __prune(self, node_list):
-        return sorted(node_list, key=lambda node: node.cost)[:min(self.beam_size, len(node_list))]
-        # return heapq.nsmallest(self.beam_size, node_list)
-        # return node_list[:min(self.beam_size, len(node_list))]
+    @staticmethod
+    def __prune(node_list, top_n):
+        return sorted(node_list, key=lambda node: node.cost)[:min(top_n, len(node_list))]
 
     def align(self, source, target):
         """
@@ -161,17 +169,19 @@ class Aligner(object):
         heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
-            # Aligner.__print_heap(heap)
+            # Aligner.__print_heap(heap, 10)
             node_list = []
             for node in heap:
                 self.__populate_nodes(node_list, node, source, target)
-            heap = self.__prune(node_list)
+            heap = Aligner.__prune(node_list, self.beam_size)
 
         return Alignment(heap[0], source, target)
 
     def __populate_nodes(self, node_list, previous_node, source, target):
         source_x = previous_node.sourcePos
         target_x = previous_node.targetPos
+        source_finished = source_x >= len(source) - 1
+        target_finished = target_x >= len(target) - 1
         cost = previous_node.cost
 
         def insertion():
@@ -186,13 +196,17 @@ class Aligner(object):
         def substitution():
             return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1, cost + self.sub_cost)
 
+        # we're at the end of the alignment already
+        if source_finished and target_finished:
+            return
+
         # we're at the end of the source sequence, this must be an insertion
-        if source_x >= len(source) - 1:
+        if source_finished:
             Aligner.__add_new_node(node_list, insertion())
             return
 
         # we're at the end of the target sequence, this must be a deletion
-        if target_x >= len(target) - 1:
+        if target_finished:
             Aligner.__add_new_node(node_list, deletion())
             return
 
@@ -207,3 +221,62 @@ class Aligner(object):
         Aligner.__add_new_node(node_list, insertion())
         # and deletions
         Aligner.__add_new_node(node_list, deletion())
+
+
+def __find_reasonable_beam(source, target):
+    """
+    Get a reasonable beam size for the given source and target. This method may or may not be cheap.
+
+    :param source:
+    :param target:
+    :return:
+    :rtype: int
+    """
+    source_len = len(source)
+    target_len = len(target)
+
+    # print "source_len={} target_len={}".format(source_len, target_len)
+    max_dist = 0
+    for source_x in xrange(source_len):
+        try:
+            target_x = target.index(source[source_x])
+        except ValueError:
+            continue
+        # print "source_x={} target_x={}".format(source_x, target_x)
+        max_dist = max(abs(target_x - source_x), max_dist)
+
+    # this is too small
+    return 100 + max_dist
+    # if max dist is huge you're probably fucked anyway
+    # return 3 ** max_dist
+
+
+def __sigmoid(v):
+    return 1. / (1. + 2. ** -v)
+
+
+def __find_reasonable_params(source, target):
+    source_len = len(source)
+    target_len = len(target)
+
+    # beam_size = __find_reasonable_beam(source, target)
+    beam_size = 200
+
+    # if they're equal length, give some power to SUB
+    if source_len == target_len:
+        return beam_size, .9, 1, 1
+
+    del_cost = 1 + __sigmoid(target_len - source_len)
+    ins_cost = 3 - del_cost
+    # sub_cost = 1.5
+    sub_cost = min(del_cost, ins_cost) * 1.1
+
+    return beam_size, sub_cost, ins_cost, del_cost
+
+
+def construct_reasonable_aligner(source, target):
+    return Aligner(*__find_reasonable_params(source, target))
+
+
+def align(source, target):
+    return construct_reasonable_aligner(source, target).align(source, target)
