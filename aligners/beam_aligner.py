@@ -266,7 +266,7 @@ def __find_reasonable_params(source, target):
     target_len = len(target)
 
     # beam_size = __find_reasonable_beam(source, target)
-    beam_size = 200
+    beam_size = 20
 
     # if they're equal length, give some power to SUB
     if source_len == target_len:

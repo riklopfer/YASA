@@ -73,12 +73,18 @@ def __load_declaration(n=1):
     return text * n
 
 
-def __del_some(tokens, frac=0.1):
-    i = 0
-    while i < len(tokens):
-        if random.random() < frac:
-            del tokens[i]
-            i += 1
+def __del_some(tokens, frac_del=0.1):
+    new_tokens = []
+    for i in xrange(len(tokens)):
+        if random.random() > frac_del:
+            # match here
+            new_tokens.append(tokens[i])
+        else:
+            # make multiple deletions a little bit more common
+            M_DEL_PROB = 0.4
+            while random.random() < M_DEL_PROB:
+                i += 1
+    return new_tokens
 
 
 def __get_words(text):
@@ -93,11 +99,10 @@ def big_word_test():
     __announce_test("Big Word Test")
     text = __load_declaration(100)
     target = __get_words(text)
-    source = __get_words(text)
-    __del_some(source)
+    source = __del_some(__get_words(text))
 
-    test_reasonable_aligner(source, target, False)
-    # __param_search(source, target)
+    test_reasonable_aligner(source, target, True)
+    # __param_search(source, target, True)
 
 
 def big_char_test():
