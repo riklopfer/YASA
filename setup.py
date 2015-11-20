@@ -6,5 +6,5 @@ setup(name='YASA',
       author='Russell Klopfer',
       author_email='russell@klopfer.us',
       url='https://github.com/riklopfer/YASA',
-      packages=['aligners'],
+      packages=['yasa'],
       )

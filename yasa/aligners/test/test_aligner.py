@@ -1,6 +1,6 @@
-import aligners.beam_aligner
-import time
 import random
+import time
+from yasa.aligners import beam_aligner
 import re
 
 # do we want randomized results to be reproducible?
@@ -25,7 +25,7 @@ def test_aligner(aligner, source, target, pretty=True):
 
 
 def test_reasonable_aligner(source, target, pretty=True):
-    aligner = aligners.beam_aligner.construct_reasonable_aligner(source, target)
+    aligner = beam_aligner.construct_reasonable_aligner(source, target)
     test_aligner(aligner, source, target, pretty)
 
 
@@ -39,7 +39,7 @@ def test_wer_aligner(source, target, pretty=True):
     :return:
     :rtype: None
     """
-    aligner = aligners.beam_aligner.Aligner(200, 1, 1, 1)
+    aligner = beam_aligner.Aligner(200, 1, 1, 1)
     test_aligner(aligner, source, target, pretty)
 
 
