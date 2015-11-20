@@ -136,7 +136,7 @@ class Aligner(object):
                 format(self.beam_size, self.sub_cost, self.ins_cost, self.del_cost))
 
     @staticmethod
-    def __print_heap(heap, n=None):
+    def __print_heap(heap, source, target, n=None):
         """
         Prints the top-n elements of the heap.
 
@@ -147,7 +147,7 @@ class Aligner(object):
         n = len(heap) if n is None else min(n, len(heap))
         print "HEAP ({}) [[[".format(len(heap))
         for i in xrange(n):
-            print heap[i]
+            print "{}.) {}\n".format(i, Alignment(heap[i], source, target).pretty_print())
         print "]]]"
 
     @staticmethod
@@ -169,7 +169,7 @@ class Aligner(object):
         heap = [Aligner.START_NODE]
 
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
-            # Aligner.__print_heap(heap, 10)
+            Aligner.__print_heap(heap, source, target, 5)
             node_list = []
             for node in heap:
                 self.__populate_nodes(node_list, node, source, target)
