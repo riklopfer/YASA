@@ -97,7 +97,7 @@ class AlignmentNode(object):
     def __eq__(self, other):
         return (
             self.previous == other.previous and
-            self.cost == other.cost and
+            # self.cost == other.cost and
             self.sourcePos == other.sourcePos and
             self.targetPos == other.targetPos
         )
@@ -111,6 +111,9 @@ class AlignmentNode(object):
     def __str__(self):
         return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
             self.align_type, self.sourcePos, self.targetPos, self.cost)
+
+    def pretty_print(self, source, target):
+        return Alignment(self, source, target).pretty_print()
 
 
 class Aligner(object):
@@ -171,12 +174,18 @@ class Aligner(object):
         """
         heap = [Aligner.START_NODE]
 
+        itrx = 0
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
-            Aligner.__print_heap(heap, source, target, 5)
+            # Aligner.__print_heap(heap, source, target, 5)
             node_list = []
             for node in heap:
                 self.__populate_nodes(node_list, node, source, target)
+
+            print "{} before prune\n{}".format(itrx, node_list[0].pretty_print(source, target))
             heap = Aligner.__prune(node_list, self.beam_size)
+            print "{} after prune\n{}".format(itrx, heap[0].pretty_print(source, target))
+            print
+            itrx += 1
 
         return Alignment(heap[0], source, target)
 
@@ -209,11 +218,13 @@ class Aligner(object):
         # we're at the end of the source sequence, this must be an insertion
         if source_finished:
             Aligner.__add_new_node(node_list, insertion())
+            insertion().pretty_print(source, target)
             return
 
         # we're at the end of the target sequence, this must be a deletion
         if target_finished:
             Aligner.__add_new_node(node_list, deletion())
+            deletion().pretty_print(source, target)
             return
 
         # match
