@@ -4,22 +4,21 @@ SequenceAlignment
 Beam Aligner
 ------------
 
-Created to solve the problem of aligning long, *relatively* similar sequences. Long sequences of insertions or deletions 
-will not be well modeled at the moment.
+Created to solve the problem of aligning long, *relatively* similar sequences. It may work well
+on less-similar sequences, but that has not been tested yet. 
 
 ### Basic Usage
 
 ```python
 from aligners import beam_aligner
 
-aligner = beam_aligner.Aligner(beam_size=20, sub_cost=.9, ins_cost=1, del_cost=1)
 source = "this is a test of the beam aligner"
 target = "that was a test of the bean aligner"
 
-word_alignment = aligner.align(source.split(" "), target.split(" "))
+word_alignment = beam_aligner.align(source.split(" "), target.split(" "))
 print word_alignment.pretty_print()
 
-char_alignment = aligner.align(source, target)
+char_alignment = beam_aligner.align(source, target)
 print char_alignment.pretty_print()
 ```
 

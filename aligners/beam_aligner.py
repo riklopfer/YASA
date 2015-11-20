@@ -97,16 +97,10 @@ class AlignmentNode(object):
     def __eq__(self, other):
         return (
             self.previous == other.previous and
-            # self.cost == other.cost and
+            self.cost == other.cost and
             self.sourcePos == other.sourcePos and
             self.targetPos == other.targetPos
         )
-
-    def __lt__(self, other):
-        return self.cost < other.cost
-
-    def __le__(self, other):
-        return self.cost <= other.cost
 
     def __str__(self):
         return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
@@ -172,18 +166,18 @@ class Aligner(object):
         :return:
         :rtype: Alignment
         """
-        heap = [Aligner.START_NODE]
+        current_heap = [Aligner.START_NODE]
 
-        while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
+        while current_heap[0].sourcePos < len(source) - 1 or current_heap[0].targetPos < len(target) - 1:
             # Aligner.__print_heap(heap, source, target, 5)
-            node_list = []
-            for node in heap:
-                self.__populate_nodes(node_list, node, source, target)
-            heap = Aligner.__prune(node_list, self.beam_size)
+            next_heap = []
+            for node in current_heap:
+                self.__populate_nodes(next_heap, node, source, target)
+            current_heap = Aligner.__prune(next_heap, self.beam_size)
 
-        return Alignment(heap[0], source, target)
+        return Alignment(current_heap[0], source, target)
 
-    def __populate_nodes(self, node_list, previous_node, source, target):
+    def __populate_nodes(self, next_heap, previous_node, source, target):
         source_x = previous_node.sourcePos
         target_x = previous_node.targetPos
         source_finished = source_x >= len(source) - 1
@@ -207,32 +201,32 @@ class Aligner(object):
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
-            Aligner.__add_new_node(node_list, previous_node)
+            Aligner.__add_new_node(next_heap, previous_node)
             return
 
         # we're at the end of the source sequence, this must be an insertion
         if source_finished:
-            Aligner.__add_new_node(node_list, insertion())
+            Aligner.__add_new_node(next_heap, insertion())
             # print insertion().pretty_print(source, target)
             return
 
         # we're at the end of the target sequence, this must be a deletion
         if target_finished:
-            Aligner.__add_new_node(node_list, deletion())
+            Aligner.__add_new_node(next_heap, deletion())
             # print deletion().pretty_print(source, target)
             return
 
         # match
         if source[source_x + 1] == target[target_x + 1]:
-            Aligner.__add_new_node(node_list, match())
+            Aligner.__add_new_node(next_heap, match())
         # sub
         else:
-            Aligner.__add_new_node(node_list, substitution())
+            Aligner.__add_new_node(next_heap, substitution())
 
         # always allow for insertions
-        Aligner.__add_new_node(node_list, insertion())
+        Aligner.__add_new_node(next_heap, insertion())
         # and deletions
-        Aligner.__add_new_node(node_list, deletion())
+        Aligner.__add_new_node(next_heap, deletion())
 
 
 def __find_reasonable_beam(source, target):

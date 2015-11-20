@@ -3,7 +3,6 @@ import time
 import random
 import re
 
-
 random.seed(98723432)
 
 
@@ -21,12 +20,26 @@ def test_aligner(aligner, source, target, pretty=True):
     return alignment
 
 
-def test_default_aligner(source, target, pretty=True):
+def test_reasonable_aligner(source, target, pretty=True):
     aligner = aligners.beam_aligner.construct_reasonable_aligner(source, target)
     test_aligner(aligner, source, target, pretty)
 
 
-def jumble(tokens):
+def test_wer_aligner(source, target, pretty=True):
+    """
+    Test Word Error Rate aligner
+
+    :param source:
+    :param target:
+    :param pretty:
+    :return:
+    :rtype: None
+    """
+    aligner = aligners.beam_aligner.Aligner(200, 1, 1, 1)
+    test_aligner(aligner, source, target, pretty)
+
+
+def __jumble(tokens):
     for i in xrange(len(tokens) - 1):
         if random.random() < 0.1:
             swapx = random.randint(i + 1, len(tokens) - 1)
@@ -58,7 +71,6 @@ def __del_some(tokens, frac=0.1):
     i = 0
     while i < len(tokens):
         if random.random() < frac:
-            # print "deleting", tokens[i]
             del tokens[i]
             i += 1
 
@@ -78,7 +90,7 @@ def big_word_test():
     source = __get_words(text)
     __del_some(source)
 
-    test_default_aligner(source, target)
+    test_reasonable_aligner(source, target)
     # __param_search(source, target)
 
 
@@ -87,7 +99,7 @@ def big_char_test():
     text = __load_declaration()
     source = [c for c in text]
     target = [c for c in text]
-    jumble(source)
+    __jumble(source)
 
     __param_search(source, target)
 
@@ -98,33 +110,40 @@ def __param_search(source, target, pretty=False):
         test_aligner_params(beam_size, source, target, pretty)
 
 
-def short_prefix_test():
-    __announce_test("Short Prefix Test")
-    source = __get_words("this is a test")
-    target = __get_words("sailing upwind is difficult") + source
-
-    beam_size = 3 ** int(max(len(source), len(target)) / 2)
-    test_aligner_params(beam_size, source, target, True)
-
-    aligner = aligners.beam_aligner.construct_reasonable_aligner(source, target)
-    test_aligner(aligner, source, target, True)
+WORD_SOURCE_TARGET_PAIRS = [
+    # disproportionately long target
+    ("how many chucks could a wood chuck",
+     "wood chucks are nice animals -- although they will dig holes in your garden. " +
+     "how many chucks could a wood chuck if a wood chuck could chuck wood"),
+    # disproportionately long source
+    ("wood chucks are nice animals -- although they will dig holes in your garden. " +
+     "how many chucks could a wood chuck if a wood chuck could chuck wood",
+     "how many chucks could a wood chuck"),
+    # this will not align
+    ("this is a test", "sailing up wind is hard"),
+    # poor alignment
+    ("bad alignments are bad", "on the other hand, good alignments are good"),
+    # reasonable alignment
+    ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable"),
+    # reasonable alignment + 1
+    ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable right???"),
+    # poor-ish alignment
+    ("no alignment is better than a horrible one?", "i had a horrible headache")
+]
 
 
 def default_aligner_tests():
     __announce_test("Default Aligner Tests")
-    st_pairs = [
-        ("how many chucks could a wood chuck",
-         "wood chucks are nice animals -- although they will dig holes in your garden. " +
-         "how many chucks could a wood chuck if a wood chuck could chuck wood"),
-        ("this is a test", "i will not align at all"),
-        ("bad alignments are bad", "on the other hand, good alignments are good"),
-        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable"),
-        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable right???"),
-        ("no alignment is better than a horrible one?", "i had a horrible headache")
-    ]
 
-    for (source, target) in st_pairs:
-        test_default_aligner(__get_words(source), __get_words(target))
+    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
+        test_reasonable_aligner(__get_words(source), __get_words(target))
+
+
+def wer_aligner_tests():
+    __announce_test("WER Aligner Tests")
+
+    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
+        test_wer_aligner(__get_words(source), __get_words(target))
 
 
 def known_weirdness():
@@ -134,13 +153,14 @@ def known_weirdness():
     ]
 
     for (source, target) in st_pairs:
-        test_default_aligner(__get_words(source), __get_words(target))
+        test_reasonable_aligner(__get_words(source), __get_words(target))
 
 
 def test_all():
     known_weirdness()
 
     default_aligner_tests()
+    wer_aligner_tests()
     # short_prefix_test()
 
     # big_word_test()
