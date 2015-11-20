@@ -118,6 +118,8 @@ def default_aligner_tests():
          "how many chucks could a wood chuck if a wood chuck could chuck wood"),
         ("this is a test", "i will not align at all"),
         ("bad alignments are bad", "on the other hand, good alignments are good"),
+        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable"),
+        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable right???"),
         ("no alignment is better than a horrible one?", "i had a horrible headache")
     ]
 
@@ -128,9 +130,7 @@ def default_aligner_tests():
 def known_weirdness():
     __announce_test("KNOWN WEIRDNESS")
     st_pairs = [
-        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable"),
-        # TODO why does this produce INS + DEL instead of SUB???
-        ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable right???"),
+
     ]
 
     for (source, target) in st_pairs:
@@ -140,7 +140,7 @@ def known_weirdness():
 def test_all():
     known_weirdness()
 
-    # default_aligner_tests()
+    default_aligner_tests()
     # short_prefix_test()
 
     # big_word_test()

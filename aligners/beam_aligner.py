@@ -174,18 +174,12 @@ class Aligner(object):
         """
         heap = [Aligner.START_NODE]
 
-        itrx = 0
         while heap[0].sourcePos < len(source) - 1 or heap[0].targetPos < len(target) - 1:
             # Aligner.__print_heap(heap, source, target, 5)
             node_list = []
             for node in heap:
                 self.__populate_nodes(node_list, node, source, target)
-
-            print "{} before prune\n{}".format(itrx, node_list[0].pretty_print(source, target))
             heap = Aligner.__prune(node_list, self.beam_size)
-            print "{} after prune\n{}".format(itrx, heap[0].pretty_print(source, target))
-            print
-            itrx += 1
 
         return Alignment(heap[0], source, target)
 
@@ -213,18 +207,19 @@ class Aligner(object):
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
+            Aligner.__add_new_node(node_list, previous_node)
             return
 
         # we're at the end of the source sequence, this must be an insertion
         if source_finished:
             Aligner.__add_new_node(node_list, insertion())
-            insertion().pretty_print(source, target)
+            # print insertion().pretty_print(source, target)
             return
 
         # we're at the end of the target sequence, this must be a deletion
         if target_finished:
             Aligner.__add_new_node(node_list, deletion())
-            deletion().pretty_print(source, target)
+            # print deletion().pretty_print(source, target)
             return
 
         # match
