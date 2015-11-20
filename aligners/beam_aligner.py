@@ -182,19 +182,22 @@ class Aligner(object):
         target_x = previous_node.targetPos
         source_finished = source_x >= len(source) - 1
         target_finished = target_x >= len(target) - 1
-        cost = previous_node.cost
 
         def insertion():
-            return AlignmentNode(AlignmentType.INS, previous_node, source_x, target_x + 1, cost + self.ins_cost)
+            return AlignmentNode(AlignmentType.INS, previous_node, source_x, target_x + 1,
+                                 previous_node.cost + self.ins_cost)
 
         def deletion():
-            return AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1, target_x, cost + self.del_cost)
+            return AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1, target_x,
+                                 previous_node.cost + self.del_cost)
 
         def match():
-            return AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1, target_x + 1, cost)
+            return AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1, target_x + 1,
+                                 previous_node.cost)
 
         def substitution():
-            return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1, cost + self.sub_cost)
+            return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1,
+                                 previous_node.cost + self.sub_cost)
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
