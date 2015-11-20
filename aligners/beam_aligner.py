@@ -34,6 +34,9 @@ class Alignment(object):
     def get_type(self, align_x):
         return self.nodes[align_x].align_type
 
+    def get_cost(self, align_x):
+        return self.nodes[align_x].cost
+
     def __str__(self):
         return ("size={} len(source)={}, len(target)={}, cost={}"
                 .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost)
@@ -45,7 +48,7 @@ class Alignment(object):
             a_type = self.get_type(i)
             source = '' if a_type == AlignmentType.INS else self.get_source(i)
             target = '' if a_type == AlignmentType.DEL else self.get_target(i)
-            pretty += "{:<30}{:^10}{:>30}\n".format(source, a_type, target)
+            pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.get_cost(i))
         return pretty
 
 
@@ -145,7 +148,7 @@ class Aligner(object):
         :return: None
         """
         n = len(heap) if n is None else min(n, len(heap))
-        print "HEAP ({}) [[[".format(len(heap))
+        print "************HEAP**************\n({}) [[[".format(len(heap))
         for i in xrange(n):
             print "{}.) {}\n".format(i, Alignment(heap[i], source, target).pretty_print())
         print "]]]"
