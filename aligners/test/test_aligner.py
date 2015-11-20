@@ -20,8 +20,13 @@ def test_aligner(aligner, source, target, pretty=True):
     print aligner
     t0 = time.clock()
     alignment = aligner.align(source, target)
-    print "Finished alignment in {}ms".format((time.clock() - t0) * 1000)
-    print alignment.pretty_print() if pretty else alignment
+    t1 = time.clock()
+    if pretty:
+        print "+"*10, "  Alignment Time = {}ms  ".format((t1 - t0) * 1000), "+"*10
+        print alignment.pretty_print()
+        print alignment
+    else:
+        print alignment
     print
     return alignment
 
@@ -67,9 +72,11 @@ def __load_declaration(n=1):
     :param n:
     :return:
     """
+    print "Loading declaration...",
     fp = open('declaration.txt')
     text = fp.read()
     fp.close()
+    print "Done"
     return text * n
 
 
@@ -168,7 +175,7 @@ def test_all():
     default_aligner_tests()
     wer_aligner_tests()
 
-    big_word_test()
+    # big_word_test()
     # big_char_test()
 
 
