@@ -1,5 +1,7 @@
-SequenceAlignment
+YASA
 =================
+
+Yet Another Sequence Aligner
 
 Beam Aligner
 ------------
