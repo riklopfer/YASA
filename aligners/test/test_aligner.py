@@ -15,6 +15,8 @@ def test_aligner(aligner, source, target, pretty=True):
         print "+" * 10, "  Alignment Time = {} ms  ".format((t1 - t0) * 1000), "+" * 10
         print alignment.pretty_print()
         print alignment
+        print "+" * 10, "  Alignment Time = {} ms  ".format((t1 - t0) * 1000), "+" * 10
+        print
     else:
         print alignment
     print
@@ -43,7 +45,8 @@ def test_wer_aligner(source, target, pretty=True):
 def __jumble(tokens):
     for i in xrange(len(tokens) - 1):
         if random.random() < 0.1:
-            swapx = random.randint(i + 1, len(tokens) - 1)
+            # only let the sapping take place N tokens apart
+            swapx = random.randint(i + 1, min(i + 1 + 5, len(tokens) - 1))
             if swapx < len(tokens):
                 swap = tokens[swapx]
                 tokens[swapx] = tokens[i]
@@ -92,10 +95,12 @@ def __get_chars(text):
     return [c for c in text]
 
 
-def big_word_test():
+def big_word_test(jumble=False):
     __announce_test("Big Word Test")
     text = __load_declaration(100)
     target = __get_words(text)
+    if jumble:
+        __jumble(target)
     source = __del_some(__get_words(text))
 
     test_reasonable_aligner(source, target, True)
