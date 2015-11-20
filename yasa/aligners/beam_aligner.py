@@ -258,6 +258,12 @@ def __find_reasonable_beam(source, target):
 
 
 def __sigmoid(v):
+    """
+    Compute the sigmoid.
+    TODO This function should be removed because it's unnecessarily expensive
+    :param v:
+    :return:
+    """
     return 1. / (1. + 2. ** -v)
 
 

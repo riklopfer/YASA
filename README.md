@@ -12,7 +12,7 @@ on less-similar sequences, but that has not been tested yet.
 ### Basic Usage
 
 ```python
-from aligners import beam_aligner
+from yasa.aligners import beam_aligner
 
 source = "this is a test of the beam aligner"
 target = "that was a test of the bean aligner"
