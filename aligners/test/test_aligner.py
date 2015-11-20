@@ -6,7 +6,13 @@ import re
 random.seed(98723432)
 
 
-def test_aligner_params(beam_size, source, target, pretty=True):
+def __param_search(source, target, pretty=False):
+    for beam_size in xrange(0, 55, 10):
+        beam_size = beam_size if beam_size > 0 else 1
+        __test_aligner_params(beam_size, source, target, pretty)
+
+
+def __test_aligner_params(beam_size, source, target, pretty=True):
     test_aligner(aligners.beam_aligner.Aligner(beam_size, .9, 1, 1), source, target, pretty)
 
 
@@ -90,7 +96,7 @@ def big_word_test():
     source = __get_words(text)
     __del_some(source)
 
-    test_reasonable_aligner(source, target)
+    test_reasonable_aligner(source, target, False)
     # __param_search(source, target)
 
 
@@ -101,13 +107,8 @@ def big_char_test():
     target = [c for c in text]
     __jumble(source)
 
-    __param_search(source, target)
-
-
-def __param_search(source, target, pretty=False):
-    for beam_size in xrange(0, 55, 10):
-        beam_size = beam_size if beam_size > 0 else 1
-        test_aligner_params(beam_size, source, target, pretty)
+    test_reasonable_aligner(source, target)
+    # __param_search(source, target)
 
 
 WORD_SOURCE_TARGET_PAIRS = [
@@ -161,9 +162,8 @@ def test_all():
 
     default_aligner_tests()
     wer_aligner_tests()
-    # short_prefix_test()
 
-    # big_word_test()
+    big_word_test()
     # big_char_test()
 
 
