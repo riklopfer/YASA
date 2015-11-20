@@ -257,6 +257,7 @@ def __find_reasonable_beam(source, target):
     # return 3 ** max_dist
 
 
+# TODO remove sigmoid... it's not necessary and can be expensive to compute of large v
 def __sigmoid(v):
     return 1. / (1. + 2. ** -v)
 

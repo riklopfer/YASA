@@ -3,6 +3,7 @@ import time
 import random
 import re
 
+# do we want randomized results to be reproducible?
 random.seed(98723432)
 
 
@@ -73,16 +74,15 @@ def __load_declaration(n=1):
     return text * n
 
 
-def __del_some(tokens, frac_del=0.1):
+def __del_some(tokens, del_prob=0.1, m_del_prob=0.4):
     new_tokens = []
     for i in xrange(len(tokens)):
-        if random.random() > frac_del:
+        if random.random() > del_prob:
             # match here
             new_tokens.append(tokens[i])
         else:
-            # make multiple deletions a little bit more common
-            M_DEL_PROB = 0.4
-            while random.random() < M_DEL_PROB:
+            # maybe this deletion is a multiple deletion
+            while random.random() < m_del_prob:
                 i += 1
     return new_tokens
 
@@ -95,12 +95,15 @@ def __get_chars(text):
     return [c for c in text]
 
 
-def big_word_test(jumble=False):
+def big_word_test():
     __announce_test("Big Word Test")
-    text = __load_declaration(100)
-    target = __get_words(text)
-    if jumble:
-        __jumble(target)
+    # TODO there is something strange going on here.
+    # If you run the big word test with one copy of the declaration everything works fine. But, if you use 2
+    # copies the alignment become horrible.
+
+    copies_of_declaration = 2
+    text = __load_declaration(copies_of_declaration)
+    target = __del_some(__get_words(text))
     source = __del_some(__get_words(text))
 
     test_reasonable_aligner(source, target, True)
