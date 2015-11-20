@@ -6,23 +6,13 @@ import re
 random.seed(98723432)
 
 
-def __param_search(source, target, pretty=False):
-    for beam_size in xrange(0, 55, 10):
-        beam_size = beam_size if beam_size > 0 else 1
-        __test_aligner_params(beam_size, source, target, pretty)
-
-
-def __test_aligner_params(beam_size, source, target, pretty=True):
-    test_aligner(aligners.beam_aligner.Aligner(beam_size, .9, 1, 1), source, target, pretty)
-
-
 def test_aligner(aligner, source, target, pretty=True):
     print aligner
     t0 = time.clock()
     alignment = aligner.align(source, target)
     t1 = time.clock()
     if pretty:
-        print "+"*10, "  Alignment Time = {}ms  ".format((t1 - t0) * 1000), "+"*10
+        print "+" * 10, "  Alignment Time = {} ms  ".format((t1 - t0) * 1000), "+" * 10
         print alignment.pretty_print()
         print alignment
     else:
@@ -175,7 +165,7 @@ def test_all():
     default_aligner_tests()
     wer_aligner_tests()
 
-    # big_word_test()
+    big_word_test()
     # big_char_test()
 
 
