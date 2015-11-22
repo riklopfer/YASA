@@ -146,7 +146,7 @@ class Aligner(object):
         """
         n = len(heap) if n is None else min(n, len(heap))
         print "************HEAP**************\n({}) [[[".format(len(heap))
-        for i in xrange(n):
+        for i in xrange(n - 1, 0, -1):
             print "{}.) {}\n".format(i, Alignment(heap[i], source, target).pretty_print())
         print "]]]"
 
@@ -169,7 +169,7 @@ class Aligner(object):
         current_heap = [Aligner.START_NODE]
 
         while current_heap[0].sourcePos < len(source) - 1 or current_heap[0].targetPos < len(target) - 1:
-            # Aligner.__print_heap(heap, source, target, 5)
+            # Aligner.__print_heap(current_heap, source, target, 5)
             next_heap = []
             for node in current_heap:
                 self.__populate_nodes(next_heap, node, source, target)
@@ -276,7 +276,7 @@ def __find_reasonable_params(source, target):
 
     # if they're equal length, give some power to SUB
     if source_len == target_len:
-        return beam_size, .9, 1, 1
+        return beam_size, 1, 1, 1
 
     del_cost = 1 + __sigmoid(target_len - source_len)
     ins_cost = 3 - del_cost

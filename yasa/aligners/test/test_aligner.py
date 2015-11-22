@@ -101,10 +101,17 @@ def big_word_test():
     # If you run the big word test with one copy of the declaration everything works fine. But, if you use 2
     # copies the alignment become horrible.
 
-    copies_of_declaration = 2
+    copies_of_declaration = 1
     text = __load_declaration(copies_of_declaration)
-    target = __del_some(__get_words(text))
-    source = __del_some(__get_words(text))
+    target = __get_words(text)
+    source = __get_words(text)
+    source = __del_some(source)
+    target = __del_some(target)
+
+    print "SOURCE"
+    print " ".join(source)
+    print "TARGET"
+    print " ".join(target)
 
     test_reasonable_aligner(source, target, True)
     # __param_search(source, target, True)
@@ -168,10 +175,10 @@ def known_weirdness():
 
 
 def test_all():
-    known_weirdness()
-
-    default_aligner_tests()
-    wer_aligner_tests()
+    # known_weirdness()
+    #
+    # default_aligner_tests()
+    # wer_aligner_tests()
 
     big_word_test()
     # big_char_test()
