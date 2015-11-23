@@ -26,9 +26,13 @@ class Alignment(object):
         return len(self.nodes)
 
     def get_source(self, align_x):
+        if self.get_type(align_x) == AlignmentType.INS:
+            return ''
         return self.source_seq[self.nodes[align_x].sourcePos]
 
     def get_target(self, align_x):
+        if self.get_type(align_x) == AlignmentType.DEL:
+            return ''
         return self.target_seq[self.nodes[align_x].targetPos]
 
     def get_type(self, align_x):
@@ -36,6 +40,9 @@ class Alignment(object):
 
     def get_cost(self, align_x):
         return self.nodes[align_x].cost
+
+    def as_tuples(self):
+        return [(self.get_source(i), self.get_target(i)) for i in xrange(self.size())]
 
     def __str__(self):
         return ("size={} len(source)={}, len(target)={}, cost={}"
@@ -46,8 +53,8 @@ class Alignment(object):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
             a_type = self.get_type(i)
-            source = '' if a_type == AlignmentType.INS else self.get_source(i).replace("\n", "\\n")
-            target = '' if a_type == AlignmentType.DEL else self.get_target(i).replace("\n", "\\n")
+            source = self.get_source(i).replace("\n", "\\n")
+            target = self.get_target(i).replace("\n", "\\n")
             pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.get_cost(i))
         return pretty
 

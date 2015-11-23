@@ -24,25 +24,6 @@ def test_aligner(aligner, source, target, pretty=True):
     return alignment
 
 
-def test_reasonable_aligner(source, target, pretty=True):
-    aligner = beam_aligner.construct_reasonable_aligner(source, target)
-    test_aligner(aligner, source, target, pretty)
-
-
-def test_wer_aligner(source, target, pretty=True):
-    """
-    Test Word Error Rate aligner
-
-    :param source:
-    :param target:
-    :param pretty:
-    :return:
-    :rtype: None
-    """
-    aligner = beam_aligner.Aligner(200, 1, 1, 1)
-    test_aligner(aligner, source, target, pretty)
-
-
 def __jumble(tokens):
     for i in xrange(len(tokens) - 1):
         if random.random() < 0.1:
@@ -113,7 +94,8 @@ def big_word_test():
     print "TARGET"
     print " ".join(target)
 
-    test_reasonable_aligner(source, target, True)
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
+    test_aligner(aligner, source, target, True)
     # __param_search(source, target, True)
 
 
@@ -124,8 +106,8 @@ def big_char_test():
     target = [c for c in text]
     __jumble(source)
 
-    test_reasonable_aligner(source, target)
-    # __param_search(source, target)
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
+    test_aligner(aligner, source, target, True)
 
 
 WORD_SOURCE_TARGET_PAIRS = [
@@ -154,14 +136,10 @@ def default_aligner_tests():
     __announce_test("Default Aligner Tests")
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-        test_reasonable_aligner(__get_words(source), __get_words(target))
-
-
-def wer_aligner_tests():
-    __announce_test("WER Aligner Tests")
-
-    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-        test_wer_aligner(__get_words(source), __get_words(target))
+        source = __get_words(source)
+        target = __get_words(target)
+        aligner = beam_aligner.construct_reasonable_aligner(source, target)
+        test_aligner(aligner, source, target, True)
 
 
 def known_weirdness():
@@ -170,17 +148,53 @@ def known_weirdness():
 
     ]
 
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
     for (source, target) in st_pairs:
-        test_reasonable_aligner(__get_words(source), __get_words(target))
+        test_aligner(aligner, __get_words(source), __get_words(target))
+
+
+def as_tuples_ins_test():
+    __announce_test(as_tuples_ins_test.__name__)
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
+    source = "a test".split(" ")
+    target = "not a test".split(" ")
+
+    tuples = aligner.align(source, target).as_tuples()
+    print tuples
+    assert tuples == [('', 'not'), ('a', 'a'), ('test', 'test')]
+
+
+def as_tuples_del_test():
+    __announce_test(as_tuples_del_test.__name__)
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
+    source = "not a test".split(" ")
+    target = "a test".split(" ")
+
+    tuples = aligner.align(source, target).as_tuples()
+    print tuples
+    assert tuples == [('not', ''), ('a', 'a'), ('test', 'test')]
+
+
+def as_tuples_sub_test():
+    __announce_test(as_tuples_sub_test.__name__)
+    aligner = beam_aligner.Aligner(20, 1, 1, 1)
+    source = "snot a test".split(" ")
+    target = "not a test".split(" ")
+
+    tuples = aligner.align(source, target).as_tuples()
+    print tuples
+    assert tuples == [('snot', 'not'), ('a', 'a'), ('test', 'test')]
 
 
 def test_all():
     # known_weirdness()
     #
     # default_aligner_tests()
-    # wer_aligner_tests()
+    as_tuples_ins_test()
+    as_tuples_del_test()
+    as_tuples_sub_test()
 
-    big_word_test()
+    # big_word_test()
     # big_char_test()
 
 
