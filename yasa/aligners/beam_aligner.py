@@ -46,8 +46,8 @@ class Alignment(object):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
             a_type = self.get_type(i)
-            source = '' if a_type == AlignmentType.INS else self.get_source(i)
-            target = '' if a_type == AlignmentType.DEL else self.get_target(i)
+            source = '' if a_type == AlignmentType.INS else self.get_source(i).replace("\n", "\\n")
+            target = '' if a_type == AlignmentType.DEL else self.get_target(i).replace("\n", "\\n")
             pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.get_cost(i))
         return pretty
 
