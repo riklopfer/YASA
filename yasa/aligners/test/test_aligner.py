@@ -108,10 +108,10 @@ def big_word_test():
     source = __del_some(source)
     target = __del_some(target)
 
-    print "SOURCE"
-    print " ".join(source)
-    print "TARGET"
-    print " ".join(target)
+    # print "SOURCE"
+    # print " ".join(source)
+    # print "TARGET"
+    # print " ".join(target)
 
     test_reasonable_aligner(source, target, True)
     # __param_search(source, target, True)
@@ -177,7 +177,7 @@ def known_weirdness():
 def test_all():
     # known_weirdness()
     #
-    # default_aligner_tests()
+    default_aligner_tests()
     # wer_aligner_tests()
 
     big_word_test()
