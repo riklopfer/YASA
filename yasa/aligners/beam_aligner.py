@@ -15,31 +15,31 @@ class Alignment(object):
         :return:
         :rtype: Alignment
         """
-        self.nodes = final_node.flatten()
-        self.nodes.reverse()
+        self.__nodes = final_node.flatten()
+        self.__nodes.reverse()
 
         self.source_seq = source_seq
         self.target_seq = target_seq
         self.cost = final_node.cost
 
     def size(self):
-        return len(self.nodes)
+        return len(self.__nodes)
 
     def get_source(self, align_x):
         if self.get_type(align_x) == AlignmentType.INS:
             return ''
-        return self.source_seq[self.nodes[align_x].sourcePos]
+        return self.source_seq[self.__nodes[align_x].sourcePos]
 
     def get_target(self, align_x):
         if self.get_type(align_x) == AlignmentType.DEL:
             return ''
-        return self.target_seq[self.nodes[align_x].targetPos]
+        return self.target_seq[self.__nodes[align_x].targetPos]
 
     def get_type(self, align_x):
-        return self.nodes[align_x].align_type
+        return self.__nodes[align_x].align_type
 
     def get_cost(self, align_x):
-        return self.nodes[align_x].cost
+        return self.__nodes[align_x].cost
 
     def as_tuples(self):
         return [(self.get_source(i), self.get_target(i)) for i in xrange(self.size())]
