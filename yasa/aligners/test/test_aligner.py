@@ -175,10 +175,10 @@ def known_weirdness():
 
 
 def test_all():
-    # known_weirdness()
-    #
-    # default_aligner_tests()
-    # wer_aligner_tests()
+    known_weirdness()
+
+    default_aligner_tests()
+    wer_aligner_tests()
 
     big_word_test()
     # big_char_test()

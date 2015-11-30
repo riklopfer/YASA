@@ -287,7 +287,7 @@ def __find_reasonable_params(source, target):
 
 
 def construct_reasonable_aligner(source, target):
-    return Aligner(*__find_reasonable_params(source, target))
+    return Aligner(200)
 
 
 def align(source, target):
