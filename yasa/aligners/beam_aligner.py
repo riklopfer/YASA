@@ -41,12 +41,26 @@ class Alignment(object):
     def get_cost(self, align_x):
         return self.__nodes[align_x].cost
 
+    def get_wer(self):
+        """
+        Get the Word Error Rate for this alignment. Naturally, you can do this even if the alignment
+        doesn't consist of words.
+        :return: word error rate
+        :rtype: float
+        """
+        s = len(filter(lambda n: n.align_type == AlignmentType.SUB, self.__nodes))
+        i = len(filter(lambda n: n.align_type == AlignmentType.INS, self.__nodes))
+        d = len(filter(lambda n: n.align_type == AlignmentType.DEL, self.__nodes))
+        # let's actually count the matches, since we don't want to include START or other signal nodes
+        m = len(filter(lambda n: n.align_type == AlignmentType.MATCH, self.__nodes))
+        return float(s + i + d) / float(s + i + d + m)
+
     def as_tuples(self):
         return [(self.get_source(i), self.get_target(i)) for i in xrange(self.size())]
 
     def __str__(self):
-        return ("size={} len(source)={}, len(target)={}, cost={}"
-                .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost)
+        return ("size={} len(source)={}, len(target)={}, cost={}, WER={}"
+                .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost, self.get_wer())
                 )
 
     def pretty_print(self):
@@ -234,63 +248,6 @@ class Aligner(object):
         Aligner.__add_new_node(next_heap, insertion())
         # and deletions
         Aligner.__add_new_node(next_heap, deletion())
-
-
-def __find_reasonable_beam(source, target):
-    """
-    Get a reasonable beam size for the given source and target. This method may or may not be cheap.
-
-    :param source:
-    :param target:
-    :return:
-    :rtype: int
-    """
-    source_len = len(source)
-    target_len = len(target)
-
-    # print "source_len={} target_len={}".format(source_len, target_len)
-    max_dist = 0
-    for source_x in xrange(source_len):
-        try:
-            target_x = target.index(source[source_x])
-        except ValueError:
-            continue
-        # print "source_x={} target_x={}".format(source_x, target_x)
-        max_dist = max(abs(target_x - source_x), max_dist)
-
-    # this is too small
-    return 100 + max_dist
-    # if max dist is huge you're probably fucked anyway
-    # return 3 ** max_dist
-
-
-def __sigmoid(v):
-    """
-    Compute the sigmoid.
-    TODO This function should be removed because it's unnecessarily expensive
-    :param v:
-    :return:
-    """
-    return 1. / (1. + 2. ** -v)
-
-
-def __find_reasonable_params(source, target):
-    source_len = len(source)
-    target_len = len(target)
-
-    # beam_size = __find_reasonable_beam(source, target)
-    beam_size = 20
-
-    # if they're equal length, give some power to SUB
-    if source_len == target_len:
-        return beam_size, 1, 1, 1
-
-    del_cost = 1 + __sigmoid(target_len - source_len)
-    ins_cost = 3 - del_cost
-    # sub_cost = 1.5
-    sub_cost = min(del_cost, ins_cost) * 1.1
-
-    return beam_size, sub_cost, ins_cost, del_cost
 
 
 def construct_reasonable_aligner(source, target):
