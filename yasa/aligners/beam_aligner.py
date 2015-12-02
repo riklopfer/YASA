@@ -26,50 +26,74 @@ class Alignment(object):
         return len(self.__nodes)
 
     def get_source(self, align_x):
-        if self.get_type(align_x) == AlignmentType.INS:
+        if self.align_type(align_x) == AlignmentType.INS:
             return ''
         return self.source_seq[self.__nodes[align_x].sourcePos]
 
     def get_target(self, align_x):
-        if self.get_type(align_x) == AlignmentType.DEL:
+        if self.align_type(align_x) == AlignmentType.DEL:
             return ''
         return self.target_seq[self.__nodes[align_x].targetPos]
 
-    def get_type(self, align_x):
+    def align_type(self, align_x):
         return self.__nodes[align_x].align_type
 
-    def get_cost(self, align_x):
+    def cost_at(self, align_x):
+        """
+        Get the cost at a particular point in the alignment.
+        :param align_x:
+        :return: cost
+        :rtype: float
+        """
         return self.__nodes[align_x].cost
 
-    def get_wer(self):
+    def errors_n(self):
+        """
+        Get the total number of errors in the alignment; i.e. the total number of substitutions, insertions, and
+        deletions
+
+        :return: total errors
+        :rtype: int
+        """
+        return (len(filter(lambda n: n.align_type == AlignmentType.SUB, self.__nodes)) +
+                len(filter(lambda n: n.align_type == AlignmentType.INS, self.__nodes)) +
+                len(filter(lambda n: n.align_type == AlignmentType.DEL, self.__nodes)))
+
+    def correct_n(self):
+        """
+        Get the total number of matches in the alignment.
+
+        :return:
+        :rtype: int
+        """
+        return len(filter(lambda n: n.align_type == AlignmentType.MATCH, self.__nodes))
+
+    def wer(self):
         """
         Get the Word Error Rate for this alignment. Naturally, you can do this even if the alignment
         doesn't consist of words.
+
         :return: word error rate
         :rtype: float
         """
-        s = len(filter(lambda n: n.align_type == AlignmentType.SUB, self.__nodes))
-        i = len(filter(lambda n: n.align_type == AlignmentType.INS, self.__nodes))
-        d = len(filter(lambda n: n.align_type == AlignmentType.DEL, self.__nodes))
-        # let's actually count the matches, since we don't want to include START or other signal nodes
-        m = len(filter(lambda n: n.align_type == AlignmentType.MATCH, self.__nodes))
-        return float(s + i + d) / float(s + i + d + m)
+        err_n = float(self.errors_n())
+        return err_n / (err_n + self.correct_n())
 
     def as_tuples(self):
         return [(self.get_source(i), self.get_target(i)) for i in xrange(self.size())]
 
     def __str__(self):
         return ("size={} len(source)={}, len(target)={}, cost={}, WER={}"
-                .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost, self.get_wer())
+                .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost, self.wer())
                 )
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
-            a_type = self.get_type(i)
+            a_type = self.align_type(i)
             source = self.get_source(i).replace("\n", "\\n")
             target = self.get_target(i).replace("\n", "\\n")
-            pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.get_cost(i))
+            pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.cost_at(i))
         return pretty
 
 
