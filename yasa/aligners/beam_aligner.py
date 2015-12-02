@@ -89,7 +89,7 @@ class Alignment(object):
 
     @staticmethod
     def __normalize_for_logging(s):
-        return s.replace("\n", "\\n").replace(' ', "' '")
+        return '<eps>' if s == '' else s.replace("\n", "\\n").replace(' ', "' '")
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
