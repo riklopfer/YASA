@@ -25,27 +25,20 @@ class Alignment(object):
     def size(self):
         return len(self.__nodes)
 
-    def get_source(self, align_x):
-        if self.align_type(align_x) == AlignmentType.INS:
-            return ''
-        return self.source_seq[self.__nodes[align_x].sourcePos]
+    def node_at(self, align_x):
+        return self.__nodes[align_x]
 
-    def get_target(self, align_x):
-        if self.align_type(align_x) == AlignmentType.DEL:
-            return ''
-        return self.target_seq[self.__nodes[align_x].targetPos]
-
-    def align_type(self, align_x):
-        return self.__nodes[align_x].align_type
-
-    def cost_at(self, align_x):
+    def errors(self):
         """
-        Get the cost at a particular point in the alignment.
-        :param align_x:
-        :return: cost
-        :rtype: float
+        Get all the errors in the alignment
+        :return:
         """
-        return self.__nodes[align_x].cost
+        def is_error(node):
+            return (node.align_type == AlignmentType.SUB or
+                    node.align_type == AlignmentType.INS or
+                    node.align_type == AlignmentType.DEL)
+
+        return filter(is_error, self.__nodes)
 
     def errors_n(self):
         """
@@ -55,9 +48,7 @@ class Alignment(object):
         :return: total errors
         :rtype: int
         """
-        return (len(filter(lambda n: n.align_type == AlignmentType.SUB, self.__nodes)) +
-                len(filter(lambda n: n.align_type == AlignmentType.INS, self.__nodes)) +
-                len(filter(lambda n: n.align_type == AlignmentType.DEL, self.__nodes)))
+        return len(self.errors())
 
     def correct_n(self):
         """
@@ -80,7 +71,7 @@ class Alignment(object):
         return err_n / (err_n + self.correct_n())
 
     def as_tuples(self):
-        return [(self.get_source(i), self.get_target(i)) for i in xrange(self.size())]
+        return [(node.source_token(self.source_seq), node.target_token(self.target_seq)) for node in self.__nodes]
 
     def __str__(self):
         return ("size={} len(source)={}, len(target)={}, cost={}, WER={}"
@@ -93,11 +84,8 @@ class Alignment(object):
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
-        for i in xrange(self.size()):
-            a_type = self.align_type(i)
-            source = Alignment.__normalize_for_logging(self.get_source(i))
-            target = Alignment.__normalize_for_logging(self.get_target(i))
-            pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.cost_at(i))
+        for node in self.__nodes:
+            pretty += node.pretty_print(self.source_seq, self.target_seq) + "\n"
         return pretty
 
 
@@ -143,6 +131,20 @@ class AlignmentNode(object):
     def is_target_end(self, target):
         return self.targetPos >= len(target) - 1
 
+    def source_token(self, source_seq, empty=''):
+        if self.align_type == AlignmentType.INS:
+            return empty
+        return source_seq[self.sourcePos]
+
+    def target_token(self, target_seq, empty=''):
+        if self.align_type == AlignmentType.DEL:
+            return empty
+        return target_seq[self.targetPos]
+
+    def pretty_print(self, source_seq, target_seq):
+        return ("{:<30}{:^10}{:>30}   {:<5}"
+                .format(self.source_token(source_seq), self.align_type, self.target_token(target_seq), self.cost))
+
     def __eq__(self, other):
         return (
             self.previous == other.previous and
@@ -154,9 +156,6 @@ class AlignmentNode(object):
     def __str__(self):
         return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
             self.align_type, self.sourcePos, self.targetPos, self.cost)
-
-    def pretty_print(self, source, target):
-        return Alignment(self, source, target).pretty_print()
 
 
 class Aligner(object):

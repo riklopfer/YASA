@@ -174,6 +174,19 @@ def known_weirdness():
         test_reasonable_aligner(__get_words(source), __get_words(target))
 
 
+def get_errors_test():
+    __announce_test("Get errors test")
+
+    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
+        source = __get_words(source)
+        target = __get_words(target)
+
+        alignment = beam_aligner.align(source, target)
+        print alignment
+        for node in alignment.errors():
+            print node.pretty_print(source, target)
+
+
 def test_all():
     # known_weirdness()
     #
@@ -182,6 +195,8 @@ def test_all():
 
     big_word_test()
     # big_char_test()
+
+    get_errors_test()
 
 
 if __name__ == '__main__':
