@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='YASA',
-      version='0.0.4',
+      version='0.0.5',
       description='Sequence aligners written in python',
       author='Russell Klopfer',
       author_email='russell@klopfer.us',
