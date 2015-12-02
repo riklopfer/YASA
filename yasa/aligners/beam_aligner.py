@@ -87,12 +87,16 @@ class Alignment(object):
                 .format(self.size(), len(self.source_seq), len(self.target_seq), self.cost, self.wer())
                 )
 
+    @staticmethod
+    def __normalize_for_logging(s):
+        return s.replace("\n", "\\n").replace(' ', "' '")
+
     def pretty_print(self):
         pretty = self.__str__() + "\n"
         for i in xrange(self.size()):
             a_type = self.align_type(i)
-            source = self.get_source(i).replace("\n", "\\n")
-            target = self.get_target(i).replace("\n", "\\n")
+            source = Alignment.__normalize_for_logging(self.get_source(i))
+            target = Alignment.__normalize_for_logging(self.get_target(i))
             pretty += "{:<30}{:^10}{:>30}   {:<5}\n".format(source, a_type, target, self.cost_at(i))
         return pretty
 
