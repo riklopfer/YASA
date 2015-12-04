@@ -16,7 +16,7 @@ class Alignment(object):
         :rtype: Alignment
         """
         self.__nodes = final_node.flatten()
-        self.__nodes.reverse()
+        # self.__nodes.reverse()
 
         self.source_seq = source_seq
         self.target_seq = target_seq
@@ -121,7 +121,8 @@ class AlignmentNode(object):
         flat = []
         current = self
         while current != Aligner.START_NODE:
-            flat.append(current)
+            flat.insert(0, current)
+            # flat.append(current)
             current = current.previous
         return flat
 
