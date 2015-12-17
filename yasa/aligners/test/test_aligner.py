@@ -187,16 +187,28 @@ def get_errors_test():
             print node.pretty_print(source, target)
 
 
+def get_error_counts_test():
+    __announce_test("Get error counts test")
+
+    source = __get_words("a b b a")
+    target = __get_words("a x x i s")
+
+    alignment = beam_aligner.align(source, target)
+    print alignment
+    for (error, count) in alignment.error_counts():
+        print '{}\t{}'.format(error, count)
+
+
 def test_all():
     # known_weirdness()
+
+    # default_aligner_tests()
     #
-    default_aligner_tests()
-    # wer_aligner_tests()
+    # big_word_test()
+    #
+    # get_errors_test()
 
-    big_word_test()
-    # big_char_test()
-
-    get_errors_test()
+    get_error_counts_test()
 
 
 if __name__ == '__main__':

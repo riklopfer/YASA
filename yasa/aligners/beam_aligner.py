@@ -2,6 +2,7 @@
 beam_aligner
 Author: Russell Klopfer
 """
+import itertools
 
 
 class Alignment(object):
@@ -33,12 +34,20 @@ class Alignment(object):
         Get all the errors in the alignment
         :return:
         """
+
         def is_error(node):
             return (node.align_type == AlignmentType.SUB or
                     node.align_type == AlignmentType.INS or
                     node.align_type == AlignmentType.DEL)
 
         return filter(is_error, self.__nodes)
+
+    def error_counts(self):
+        strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
+        strings.sort()
+        error_counts = map(lambda (k, g): (k, len(list(g))), itertools.groupby(strings))
+        error_counts.sort(key=lambda (e, c): -c)
+        return error_counts
 
     def errors_n(self):
         """
@@ -143,8 +152,8 @@ class AlignmentNode(object):
         return target_seq[self.targetPos]
 
     def pretty_print(self, source_seq, target_seq):
-        return ("{:<30}{:^10}{:>30}   {:<5}"
-                .format(self.source_token(source_seq), self.align_type, self.target_token(target_seq), self.cost))
+        return ("{:<30}{:^10}{:>30}"
+                .format(self.source_token(source_seq), self.align_type, self.target_token(target_seq)))
 
     def __eq__(self, other):
         return (
