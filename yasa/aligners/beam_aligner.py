@@ -88,8 +88,8 @@ class Alignment(object):
                 )
 
     @staticmethod
-    def __normalize_for_logging(s):
-        return s.replace("\n", "\\n").replace(' ', "' '")
+    def normalize_for_logging(s):
+        return s.replace("\n", "\\n")
 
     def pretty_print(self):
         pretty = self.__str__() + "\n"
@@ -153,7 +153,10 @@ class AlignmentNode(object):
 
     def pretty_print(self, source_seq, target_seq):
         return ("{:<30}{:^10}{:>30}"
-                .format(self.source_token(source_seq), self.align_type, self.target_token(target_seq)))
+                .format(Alignment.normalize_for_logging(self.source_token(source_seq)),
+                        self.align_type,
+                        Alignment.normalize_for_logging(self.target_token(target_seq)))
+                )
 
     def __eq__(self, other):
         return (
