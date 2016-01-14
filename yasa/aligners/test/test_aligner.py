@@ -196,7 +196,7 @@ def get_error_counts_test():
     alignment = beam_aligner.align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
-        print '{}\t{}'.format(error, count)
+        print '{}\t{}'.format(error.pretty_print(source, target), count)
 
 
 def test_all():

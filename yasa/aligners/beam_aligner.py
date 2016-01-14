@@ -43,9 +43,15 @@ class Alignment(object):
         return filter(is_error, self.__nodes)
 
     def error_counts(self):
-        strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
-        strings.sort()
-        error_counts = map(lambda (k, g): (k, len(list(g))), itertools.groupby(strings))
+        """
+        Count errors.
+        :return: (error, count) pairs
+        :rtype: tuple
+        """
+        # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
+        errors = map(lambda n: SortableNode(n, self.source_seq, self.target_seq), self.errors())
+        errors.sort()
+        error_counts = map(lambda (k, g): (k, len(list(g))), itertools.groupby(errors))
         error_counts.sort(key=lambda (e, c): -c)
         return error_counts
 
@@ -159,6 +165,8 @@ class AlignmentNode(object):
                 )
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return (
             self.previous == other.previous and
             self.cost == other.cost and
@@ -169,6 +177,38 @@ class AlignmentNode(object):
     def __str__(self):
         return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
             self.align_type, self.sourcePos, self.targetPos, self.cost)
+
+
+class SortableNode(object):
+    def __init__(self, alignment_node, source, target):
+        """
+        Constructor
+        :param alignment_node:
+        :type alignment_node: AlignmentNode
+        :return:
+        """
+        self.source = alignment_node.source_token(source)
+        self.target = alignment_node.target_token(target)
+        self._pp = alignment_node.pretty_print(source, target)
+        self.delegate = alignment_node
+
+    def pretty_print(self, source, target):
+        return self._pp
+
+    def __eq__(self, other):
+        """
+        Equals
+        :param other:
+        :type other: SortableNode
+        :return:
+        """
+        if other is None:
+            return False
+
+        return (self.delegate.align_type == other.delegate.align_type and
+                self.source == other.source and
+                self.target == other.target
+                )
 
 
 class Aligner(object):
