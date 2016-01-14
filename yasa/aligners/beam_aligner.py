@@ -195,6 +195,21 @@ class SortableNode(object):
     def pretty_print(self, source, target):
         return self._pp
 
+    def __key(self):
+        return '{}{}{}'.format(self.source, self.target, self.delegate.align_type)
+
+    def __str__(self):
+        return self._pp
+
+    def __lt__(self, other):
+        """
+        Less than comparison
+        :param other:
+        :type other: SortableNode
+        :return:
+        """
+        return self.__key() < other.__key()
+
     def __eq__(self, other):
         """
         Equals

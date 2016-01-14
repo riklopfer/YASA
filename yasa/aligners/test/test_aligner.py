@@ -7,7 +7,7 @@ import re
 random.seed(98723432)
 
 
-def test_aligner(aligner, source, target, pretty=True):
+def run_aligner(aligner, source, target, pretty=True):
     print aligner
     t0 = time.clock()
     alignment = aligner.align(source, target)
@@ -24,12 +24,12 @@ def test_aligner(aligner, source, target, pretty=True):
     return alignment
 
 
-def test_reasonable_aligner(source, target, pretty=True):
+def run_reasonable_aligner(source, target, pretty=True):
     aligner = beam_aligner.construct_reasonable_aligner(source, target)
-    test_aligner(aligner, source, target, pretty)
+    run_aligner(aligner, source, target, pretty)
 
 
-def test_wer_aligner(source, target, pretty=True):
+def run_wer_aligner(source, target, pretty=True):
     """
     Test Word Error Rate aligner
 
@@ -40,7 +40,7 @@ def test_wer_aligner(source, target, pretty=True):
     :rtype: None
     """
     aligner = beam_aligner.Aligner(200, 1, 1, 1)
-    test_aligner(aligner, source, target, pretty)
+    run_aligner(aligner, source, target, pretty)
 
 
 def __jumble(tokens):
@@ -113,7 +113,7 @@ def big_word_test():
     # print "TARGET"
     # print " ".join(target)
 
-    test_reasonable_aligner(source, target, True)
+    run_reasonable_aligner(source, target, True)
     # __param_search(source, target, True)
 
 
@@ -124,7 +124,7 @@ def big_char_test():
     target = [c for c in text]
     __jumble(source)
 
-    test_reasonable_aligner(source, target)
+    run_reasonable_aligner(source, target)
     # __param_search(source, target)
 
 
@@ -154,14 +154,14 @@ def default_aligner_tests():
     __announce_test("Default Aligner Tests")
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-        test_reasonable_aligner(__get_words(source), __get_words(target))
+        run_reasonable_aligner(__get_words(source), __get_words(target))
 
 
 def wer_aligner_tests():
     __announce_test("WER Aligner Tests")
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-        test_wer_aligner(__get_words(source), __get_words(target))
+        run_wer_aligner(__get_words(source), __get_words(target))
 
 
 def known_weirdness():
@@ -171,7 +171,7 @@ def known_weirdness():
     ]
 
     for (source, target) in st_pairs:
-        test_reasonable_aligner(__get_words(source), __get_words(target))
+        run_reasonable_aligner(__get_words(source), __get_words(target))
 
 
 def get_errors_test():
@@ -188,20 +188,35 @@ def get_errors_test():
 
 
 def get_error_counts_test():
-    __announce_test("Get error counts test")
+    test_error_counts_1()
+    test_error_counts_2()
+
+
+def test_error_counts_1():
+    __announce_test("Get error counts test 1")
 
     source = __get_words("a b b a")
     target = __get_words("a x x i s")
-    # source = source + [' ']
-    # target = [' '] + target
 
     alignment = beam_aligner.align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
-        print '{}\t{}'.format(error.pretty_print(source, target), count)
+        print '{}\t{}'.format(error, count)
 
 
-def test_all():
+def test_error_counts_2():
+    __announce_test("Get error counts test 2")
+
+    source = __get_words("a b b a")
+    target = __get_words("a x x i s s s s s")
+
+    alignment = beam_aligner.align(source, target)
+    print alignment
+    for (error, count) in alignment.error_counts():
+        print '{}\t{}'.format(error, count)
+
+
+def run_all_tests():
     # known_weirdness()
 
     # default_aligner_tests()
@@ -214,4 +229,4 @@ def test_all():
 
 
 if __name__ == '__main__':
-    test_all()
+    run_all_tests()
