@@ -192,6 +192,8 @@ def get_error_counts_test():
 
     source = __get_words("a b b a")
     target = __get_words("a x x i s")
+    # source = source + [' ']
+    # target = [' '] + target
 
     alignment = beam_aligner.align(source, target)
     print alignment
