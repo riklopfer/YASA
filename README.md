@@ -18,22 +18,17 @@ pip install --upgrade https://github.com/riklopfer/YASA/archive/master.zip
 ### Basic Usage
 
 ```python
-from yasa.aligners import beam_aligner
+#!/usr/bin/env python
+import yasa
 
 source = "this is a test of the beam aligner"
 target = "that was a test of the bean aligner"
 
-word_alignment = beam_aligner.align(source.split(" "), target.split(" "))
+aligner = yasa.NestedLevinshteinAligner(1, 50)
+word_alignment = aligner.align(source.split(" "), target.split(" "))
 print word_alignment.pretty_print()
 
-char_alignment = beam_aligner.align(source, target)
+aligner = yasa.LevinshteinAligner(1, 50)
+char_alignment = aligner.align(source, target)
 print char_alignment.pretty_print()
-```
-
-### Run some tests
-
-If you have the project cloned you can do this. Currently the tests are not installed by pip.
-
-```bash
-python -c 'from yasa.aligners import test; test.run()'
 ```
