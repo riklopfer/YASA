@@ -23,9 +23,11 @@ def run_aligner(aligner, source, target, pretty=True):
     print
     return alignment
 
+def construct_reasonable_aligner(source, target):
+    return beam_aligner.Aligner(20, 200)
 
 def run_reasonable_aligner(source, target, pretty=True):
-    aligner = beam_aligner.construct_reasonable_aligner(source, target)
+    aligner = construct_reasonable_aligner(source, target)
     run_aligner(aligner, source, target, pretty)
 
 
@@ -181,7 +183,7 @@ def get_errors_test():
         source = __get_words(source)
         target = __get_words(target)
 
-        alignment = beam_aligner.align(source, target)
+        alignment = construct_reasonable_aligner(source, target).align(source, target)
         print alignment
         for node in alignment.errors():
             print node.pretty_print(source, target)
@@ -198,7 +200,7 @@ def test_error_counts_1():
     source = __get_words("a b b a")
     target = __get_words("a x x i s")
 
-    alignment = beam_aligner.align(source, target)
+    alignment = construct_reasonable_aligner(source, target).align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
         print '{}\t{}'.format(error, count)
@@ -210,7 +212,7 @@ def test_error_counts_2():
     source = __get_words("a b b a")
     target = __get_words("a x x i s s s s s")
 
-    alignment = beam_aligner.align(source, target)
+    alignment = construct_reasonable_aligner(source, target).align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
         print '{}\t{}'.format(error, count)
@@ -219,11 +221,11 @@ def test_error_counts_2():
 def run_all_tests():
     # known_weirdness()
 
-    # default_aligner_tests()
-    #
-    # big_word_test()
-    #
-    # get_errors_test()
+    default_aligner_tests()
+
+    big_word_test()
+
+    get_errors_test()
 
     get_error_counts_test()
 

@@ -195,7 +195,7 @@ class SortableNode(object):
     def pretty_print(self, source, target):
         return self._pp
 
-    def __key(self):
+    def _key(self):
         return '{}{}{}'.format(self.source, self.target, self.delegate.align_type)
 
     def __str__(self):
@@ -208,7 +208,7 @@ class SortableNode(object):
         :type other: SortableNode
         :return:
         """
-        return self.__key() < other.__key()
+        return self._key() < other._key()
 
     def __eq__(self, other):
         """
@@ -231,28 +231,29 @@ class Aligner(object):
     START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
     MAX_BEAM_SIZE = 50000
 
-    def __init__(self, beam_size, sub_cost=1, ins_cost=1, del_cost=1):
+    def __init__(self, beam_width, heap_size, sub_cost=1, ins_cost=1, del_cost=1):
         """
         Construct a new aligner with the given parameters.
-
+        :param beam_width: beam width (0 -> infinite)
+        :param heap_size: heap size (0 -> infinite)
         :param sub_cost: cost of substituting one token for another
         :param ins_cost: cost of inserting a token (something in target that isn't in source)
         :param del_cost: cost of deleting a token (something in source that isn't in target)
         :return: a new Aligner object
         :rtype: Aligner
         """
-        assert beam_size > 0, "beam_size must be > 0"
-        self.beam_size = beam_size
+        self.beam_width = beam_width
+        self.heap_size = heap_size
         self.sub_cost = sub_cost
         self.ins_cost = ins_cost
         self.del_cost = del_cost
 
     def __str__(self):
-        return ("beam_size: {}, sub_cost: {}, ins_cost: {}, del_cost: {}".
-                format(self.beam_size, self.sub_cost, self.ins_cost, self.del_cost))
+        return ("beam_width: {}, heap_size: {}, sub_cost: {}, ins_cost: {}, del_cost: {}".
+                format(self.beam_width, self.heap_size, self.sub_cost, self.ins_cost, self.del_cost))
 
     @staticmethod
-    def __print_heap(heap, source, target, n=None):
+    def _print_heap(heap, source, target, n=None):
         """
         Prints the top-n elements of the heap.
 
@@ -267,12 +268,25 @@ class Aligner(object):
         print "]]]"
 
     @staticmethod
-    def __add_new_node(node_list, node):
+    def _add_new_node(node_list, node):
         node_list.append(node)
 
     @staticmethod
-    def __prune(node_list, top_n):
-        return sorted(node_list, key=lambda node: node.cost)[:min(top_n, len(node_list))]
+    def _prune(node_list, beam_width, max_size):
+        """
+        Prune the node list given a beam width and max size
+        :param node_list:
+        :param beam_width:
+        :param max_size:
+        :return:
+        """
+        pruned = sorted(node_list, key=lambda node: node.cost)
+        if beam_width > 0 and node_list:
+            best = node_list[0].cost
+            pruned = filter(lambda _node: _node.cost < best + beam_width, pruned)
+        if max_size > 0:
+            pruned = pruned[:min(max_size, len(node_list))]
+        return pruned
 
     def align(self, source, target):
         """
@@ -288,12 +302,12 @@ class Aligner(object):
             # Aligner.__print_heap(current_heap, source, target, 5)
             next_heap = []
             for node in current_heap:
-                self.__populate_nodes(next_heap, node, source, target)
-            current_heap = Aligner.__prune(next_heap, self.beam_size)
+                self._populate_nodes(next_heap, node, source, target)
+            current_heap = Aligner._prune(next_heap, self.beam_width, self.heap_size)
 
         return Alignment(current_heap[0], source, target)
 
-    def __populate_nodes(self, next_heap, previous_node, source, target):
+    def _populate_nodes(self, next_heap, previous_node, source, target):
         source_x = previous_node.sourcePos
         target_x = previous_node.targetPos
         source_finished = source_x >= len(source) - 1
@@ -317,37 +331,29 @@ class Aligner(object):
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
-            Aligner.__add_new_node(next_heap, previous_node)
+            Aligner._add_new_node(next_heap, previous_node)
             return
 
         # we're at the end of the source sequence, this must be an insertion
         if source_finished:
-            Aligner.__add_new_node(next_heap, insertion())
+            Aligner._add_new_node(next_heap, insertion())
             # print insertion().pretty_print(source, target)
             return
 
         # we're at the end of the target sequence, this must be a deletion
         if target_finished:
-            Aligner.__add_new_node(next_heap, deletion())
+            Aligner._add_new_node(next_heap, deletion())
             # print deletion().pretty_print(source, target)
             return
 
         # match
         if source[source_x + 1] == target[target_x + 1]:
-            Aligner.__add_new_node(next_heap, match())
+            Aligner._add_new_node(next_heap, match())
         # sub
         else:
-            Aligner.__add_new_node(next_heap, substitution())
+            Aligner._add_new_node(next_heap, substitution())
 
         # always allow for insertions
-        Aligner.__add_new_node(next_heap, insertion())
+        Aligner._add_new_node(next_heap, insertion())
         # and deletions
-        Aligner.__add_new_node(next_heap, deletion())
-
-
-def construct_reasonable_aligner(source, target):
-    return Aligner(200)
-
-
-def align(source, target):
-    return construct_reasonable_aligner(source, target).align(source, target)
+        Aligner._add_new_node(next_heap, deletion())
