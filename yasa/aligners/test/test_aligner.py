@@ -23,8 +23,10 @@ def run_aligner(aligner, source, target, pretty=True):
     print
     return alignment
 
+
 def construct_reasonable_aligner(source, target):
-    return beam_aligner.Aligner(20, 200)
+    return beam_aligner.Aligner(20, 200, beam_aligner.Levinshtein())
+
 
 def run_reasonable_aligner(source, target, pretty=True):
     aligner = construct_reasonable_aligner(source, target)
@@ -41,7 +43,7 @@ def run_wer_aligner(source, target, pretty=True):
     :return:
     :rtype: None
     """
-    aligner = beam_aligner.Aligner(200, 1, 1, 1)
+    aligner = beam_aligner.Aligner(20, 200, beam_aligner.Levinshtein())
     run_aligner(aligner, source, target, pretty)
 
 

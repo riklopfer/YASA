@@ -226,31 +226,62 @@ class SortableNode(object):
                 )
 
 
+class Scoring(object):
+    def insertion(self, token):
+        raise NotImplementedError
+
+    def deletion(self, token):
+        raise NotImplementedError
+
+    def substitution(self, source, target):
+        raise NotImplementedError
+
+    def match(self, source, target):
+        return 0
+
+
+class Levinshtein(Scoring):
+    def __init__(self, ins_cost=1, del_cost=1, sub_cost=1):
+        super(Levinshtein, self).__init__()
+        self.ins_cost = ins_cost
+        self.del_cost = del_cost
+        self.sub_cost = sub_cost
+
+    def substitution(self, source, target):
+        return self.sub_cost
+
+    def deletion(self, token):
+        return self.del_cost
+
+    def insertion(self, token):
+        return self.ins_cost
+
+
 class Aligner(object):
     # Constants
     START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
     MAX_BEAM_SIZE = 50000
 
-    def __init__(self, beam_width, heap_size, sub_cost=1, ins_cost=1, del_cost=1):
+    def __init__(self, beam_width, heap_size, scorer):
         """
         Construct a new aligner with the given parameters.
         :param beam_width: beam width (0 -> infinite)
         :param heap_size: heap size (0 -> infinite)
-        :param sub_cost: cost of substituting one token for another
-        :param ins_cost: cost of inserting a token (something in target that isn't in source)
-        :param del_cost: cost of deleting a token (something in source that isn't in target)
+        :param scorer: object to determine the cost of operations
         :return: a new Aligner object
+
+        :type beam_width: float
+        :type heap_size: int
+        :type scorer: Scoring
         :rtype: Aligner
         """
         self.beam_width = beam_width
         self.heap_size = heap_size
-        self.sub_cost = sub_cost
-        self.ins_cost = ins_cost
-        self.del_cost = del_cost
+        self.scorer = scorer
 
     def __str__(self):
-        return ("beam_width: {}, heap_size: {}, sub_cost: {}, ins_cost: {}, del_cost: {}".
-                format(self.beam_width, self.heap_size, self.sub_cost, self.ins_cost, self.del_cost))
+        return ("beam_width: {}, heap_size: {}, scorer: {}".
+                format(self.beam_width, self.heap_size, self.scorer))
 
     @staticmethod
     def _print_heap(heap, source, target, n=None):
@@ -315,19 +346,19 @@ class Aligner(object):
 
         def insertion():
             return AlignmentNode(AlignmentType.INS, previous_node, source_x, target_x + 1,
-                                 previous_node.cost + self.ins_cost)
+                                 previous_node.cost + self.scorer.insertion(target[target_x]))
 
         def deletion():
             return AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1, target_x,
-                                 previous_node.cost + self.del_cost)
+                                 previous_node.cost + self.scorer.deletion(source[source_x]))
 
         def match():
             return AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1, target_x + 1,
-                                 previous_node.cost)
+                                 previous_node.cost + self.scorer.match(source[source_x], target[target_x]))
 
         def substitution():
             return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1,
-                                 previous_node.cost + self.sub_cost)
+                                 previous_node.cost + self.scorer.substitution(source[source_x], target[target_x]))
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
