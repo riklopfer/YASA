@@ -1,7 +1,9 @@
+#!/usr/bin/env python
 import random
-import time
-import yasa
 import re
+import time
+
+import yasa
 
 # do we want randomized results to be reproducible?
 random.seed(98723432)
@@ -24,15 +26,6 @@ def run_aligner(aligner, source, target, pretty=True):
     return alignment
 
 
-def construct_reasonable_aligner(source, target):
-    return yasa.Aligner(20, 200, yasa.Levinshtein())
-
-
-def run_reasonable_aligner(source, target, pretty=True):
-    aligner = construct_reasonable_aligner(source, target)
-    run_aligner(aligner, source, target, pretty)
-
-
 def run_wer_aligner(source, target, pretty=True):
     """
     Test Word Error Rate aligner
@@ -43,7 +36,7 @@ def run_wer_aligner(source, target, pretty=True):
     :return:
     :rtype: None
     """
-    aligner = yasa.Aligner(20, 200, yasa.Levinshtein())
+    aligner = yasa.LevinshteinAligner(20, 200)
     run_aligner(aligner, source, target, pretty)
 
 
@@ -105,7 +98,7 @@ def big_word_test():
     # If you run the big word test with one copy of the declaration everything works fine. But, if you use 2
     # copies the alignment become horrible.
 
-    copies_of_declaration = 1
+    copies_of_declaration = 3
     text = __load_declaration(copies_of_declaration)
     target = __get_words(text)
     source = __get_words(text)
@@ -117,7 +110,8 @@ def big_word_test():
     # print "TARGET"
     # print " ".join(target)
 
-    run_reasonable_aligner(source, target, True)
+    aligner = yasa.NestedLevinshteinAligner(1, 50)
+    run_aligner(aligner, source, target, True)
     # __param_search(source, target, True)
 
 
@@ -128,7 +122,8 @@ def big_char_test():
     target = [c for c in text]
     __jumble(source)
 
-    run_reasonable_aligner(source, target)
+    aligner = yasa.LevinshteinAligner(source, target)
+    run_aligner(aligner, source, target)
     # __param_search(source, target)
 
 
@@ -157,8 +152,9 @@ WORD_SOURCE_TARGET_PAIRS = [
 def default_aligner_tests():
     __announce_test("Default Aligner Tests")
 
+    aligner = yasa.NestedLevinshteinAligner(1, 200)
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-        run_reasonable_aligner(__get_words(source), __get_words(target))
+        run_aligner(aligner, __get_words(source), __get_words(target))
 
 
 def wer_aligner_tests():
@@ -168,24 +164,16 @@ def wer_aligner_tests():
         run_wer_aligner(__get_words(source), __get_words(target))
 
 
-def known_weirdness():
-    __announce_test("KNOWN WEIRDNESS")
-    st_pairs = [
-
-    ]
-
-    for (source, target) in st_pairs:
-        run_reasonable_aligner(__get_words(source), __get_words(target))
-
-
 def get_errors_test():
     __announce_test("Get errors test")
+
+    aligner = yasa.NestedLevinshteinAligner(1, 100)
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
         source = __get_words(source)
         target = __get_words(target)
 
-        alignment = construct_reasonable_aligner(source, target).align(source, target)
+        alignment = aligner.align(source, target)
         print alignment
         for node in alignment.errors():
             print node.pretty_print(source, target)
@@ -202,7 +190,7 @@ def test_error_counts_1():
     source = __get_words("a b b a")
     target = __get_words("a x x i s")
 
-    alignment = construct_reasonable_aligner(source, target).align(source, target)
+    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
         print '{}\t{}'.format(error, count)
@@ -214,7 +202,7 @@ def test_error_counts_2():
     source = __get_words("a b b a")
     target = __get_words("a x x i s s s s s")
 
-    alignment = construct_reasonable_aligner(source, target).align(source, target)
+    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
     print alignment
     for (error, count) in alignment.error_counts():
         print '{}\t{}'.format(error, count)

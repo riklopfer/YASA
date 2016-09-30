@@ -4,7 +4,7 @@ Author: Russell Klopfer
 """
 import itertools
 
-__all__ = ['Aligner', 'Levinshtein', 'Scoring']
+__all__ = ['Aligner', 'Scoring']
 
 
 class Alignment(object):
@@ -239,29 +239,12 @@ class Scoring(object):
         raise NotImplementedError
 
     def match(self, source, target):
-        return 0
-
-
-class Levinshtein(Scoring):
-    def __init__(self, ins_cost=1, del_cost=1, sub_cost=1):
-        super(Levinshtein, self).__init__()
-        self.ins_cost = ins_cost
-        self.del_cost = del_cost
-        self.sub_cost = sub_cost
-
-    def substitution(self, source, target):
-        return self.sub_cost
-
-    def deletion(self, token):
-        return self.del_cost
-
-    def insertion(self, token):
-        return self.ins_cost
+        return 0.
 
 
 class Aligner(object):
     # Constants
-    START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0)
+    START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0.)
     MAX_BEAM_SIZE = 50000
 
     def __init__(self, beam_width, heap_size, scorer):
@@ -286,19 +269,19 @@ class Aligner(object):
                 format(self.beam_width, self.heap_size, self.scorer))
 
     @staticmethod
-    def _print_heap(heap, source, target, n=None):
+    def heap_to_string(heap, source, target, n=None):
         """
         Prints the top-n elements of the heap.
 
         :param heap:
         :param n:
-        :return: None
+        :rtype: str
         """
         n = len(heap) if n is None else min(n, len(heap))
-        print "************HEAP**************\n({}) [[[".format(len(heap))
+        heap_string = "************HEAP**************\n({}) [[[".format(len(heap))
         for i in xrange(n - 1, 0, -1):
-            print "{}.) {}\n".format(i, Alignment(heap[i], source, target).pretty_print())
-        print "]]]"
+            heap_string += "{}.) {}\n".format(i, Alignment(heap[i], source, target).pretty_print())
+        return heap_string + "]]]"
 
     @staticmethod
     def _add_new_node(node_list, node):
@@ -332,7 +315,7 @@ class Aligner(object):
         current_heap = [Aligner.START_NODE]
 
         while current_heap[0].sourcePos < len(source) - 1 or current_heap[0].targetPos < len(target) - 1:
-            # Aligner.__print_heap(current_heap, source, target, 5)
+            # print(Aligner.heap_to_string(current_heap, source, target, 5))
             next_heap = []
             for node in current_heap:
                 self._populate_nodes(next_heap, node, source, target)
@@ -360,7 +343,8 @@ class Aligner(object):
 
         def substitution():
             return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1, target_x + 1,
-                                 previous_node.cost + self.scorer.substitution(source[source_x], target[target_x]))
+                                 previous_node.cost + self.scorer.substitution(source[source_x + 1],
+                                                                               target[target_x + 1]))
 
         # we're at the end of the alignment already
         if source_finished and target_finished:
