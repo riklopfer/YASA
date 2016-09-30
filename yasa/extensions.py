@@ -1,7 +1,8 @@
 from __future__ import division
+from __future__ import absolute_import
 
-from yasa import Aligner as _Aligner
-from yasa import Scoring as _Scoring
+from yasa import Scoring
+from yasa import Aligner
 
 __all__ = ['LevinshteinScoring',
            'LevinshteinAligner',
@@ -10,7 +11,7 @@ __all__ = ['LevinshteinScoring',
            ]
 
 
-class LevinshteinScoring(_Scoring):
+class LevinshteinScoring(Scoring):
     """
     Levinshtein distance
     """
@@ -31,7 +32,7 @@ class LevinshteinScoring(_Scoring):
         return self.ins_cost
 
 
-class LevinshteinAligner(_Aligner):
+class LevinshteinAligner(Aligner):
     """
     Aligner that that produces alignments with cost equal to the Levinshtein distance
     """
@@ -45,7 +46,7 @@ class LevinshteinAligner(_Aligner):
         super(LevinshteinAligner, self).__init__(beam_width, heap_size, LevinshteinScoring())
 
 
-class NestedAlignmentScoring(_Scoring):
+class NestedAlignmentScoring(Scoring):
     """
     Cost of deletions and insertions will be equal to the length of the token.
     Cost of substitutions will be the cost of the alignment according to the nested aligner.
@@ -69,7 +70,7 @@ class NestedAlignmentScoring(_Scoring):
         return self._aligner.align(source, target).cost
 
 
-class NestedLevinshteinScoring(_Scoring):
+class NestedLevinshteinScoring(Scoring):
     def __init__(self, beam_width, heap_size):
         super(NestedLevinshteinScoring, self).__init__()
         self._aligner = LevinshteinAligner(beam_width, heap_size)
@@ -93,7 +94,7 @@ class NestedLevinshteinScoring(_Scoring):
 
 
 
-class NestedLevinshteinAligner(_Aligner):
+class NestedLevinshteinAligner(Aligner):
     """
     Aligner which produces alignments with cost determined by the Levinshtein distance between individual tokens
     """
