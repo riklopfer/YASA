@@ -145,14 +145,16 @@ WORD_SOURCE_TARGET_PAIRS = [
     # reasonable alignment + 1
     ("I think this test is fairly reasonable", "I stink this test is fairly unreasonable right???"),
     # poor-ish alignment
-    ("no alignment is better than a horrible one?", "i had a horrible headache")
+    ("no alignment is better than a horrible one?", "i had a horrible headache"),
+    ("this is a little bit tricky", "fishes are a very sticky animal"),
+    ("this is very crappy and this is a little bit tricky", "this is a little bit tricky")
 ]
 
 
 def default_aligner_tests():
     __announce_test("Default Aligner Tests")
 
-    aligner = yasa.NestedLevinshteinAligner(1, 200)
+    aligner = yasa.NestedLevinshteinAligner(1, 20)
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
         run_aligner(aligner, __get_words(source), __get_words(target))
 
@@ -212,12 +214,9 @@ def run_all_tests():
     # known_weirdness()
 
     default_aligner_tests()
-
-    big_word_test()
-
-    get_errors_test()
-
-    get_error_counts_test()
+    # big_word_test()
+    # get_errors_test()
+    # get_error_counts_test()
 
 
 if __name__ == '__main__':

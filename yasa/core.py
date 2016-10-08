@@ -99,8 +99,10 @@ class Alignment(object):
     def normalize_for_logging(s):
         return s.replace("\n", "\\n").replace(' ', '<sp>')
 
-    def pretty_print(self):
+    def pretty_print(self, source_title='Source', target_title='Target'):
         pretty = self.__str__() + "\n"
+        pretty += "{:<30}{:^10}{:>30}\n".format(source_title, 'Operation', target_title)
+        pretty += "{:<30}{:^10}{:>30}\n".format('-'*len(source_title), '-'*9, '-'*len(target_title))
         for node in self.__nodes:
             pretty += node.pretty_print(self.source_seq, self.target_seq) + "\n"
         return pretty
