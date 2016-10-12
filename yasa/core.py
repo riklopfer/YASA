@@ -97,7 +97,7 @@ class Alignment(object):
 
     @staticmethod
     def normalize_for_logging(s):
-        return s.replace("\n", "\\n").replace(' ', '<sp>')
+        return s.replace("\n", "\\n").replace(' ', '<sp>') if s is not None else None
 
     def pretty_print(self, source_title='Source', target_title='Target'):
         pretty = self.__str__() + "\n"
@@ -151,12 +151,12 @@ class AlignmentNode(object):
     def is_target_end(self, target):
         return self.targetPos >= len(target) - 1
 
-    def source_token(self, source_seq, empty=''):
+    def source_token(self, source_seq, empty=None):
         if self.align_type == AlignmentType.INS:
             return empty
         return source_seq[self.sourcePos]
 
-    def target_token(self, target_seq, empty=''):
+    def target_token(self, target_seq, empty=None):
         if self.align_type == AlignmentType.DEL:
             return empty
         return target_seq[self.targetPos]
