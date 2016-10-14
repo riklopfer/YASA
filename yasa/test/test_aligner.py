@@ -29,6 +29,11 @@ def run_aligner(aligner, source, target, pretty=True):
     return alignment
 
 
+def test_non_string_alignment():
+    aligner = yasa.LevinshteinAligner(5, 100)
+    run_aligner(aligner, [1, 2, 3], [2, 2, 3, 3])
+
+
 def run_wer_aligner(source, target, pretty=True):
     """
     Test Word Error Rate aligner
@@ -217,6 +222,7 @@ def run_all_tests():
     # known_weirdness()
 
     default_aligner_tests()
+    test_non_string_alignment()
     # big_word_test()
     # get_errors_test()
     # get_error_counts_test()

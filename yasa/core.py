@@ -163,9 +163,9 @@ class AlignmentNode(object):
 
     def pretty_print(self, source_seq, target_seq):
         return ("{:<30}{:^10}{:>30}"
-                .format(Alignment.normalize_for_logging(self.source_token(source_seq)),
+                .format(Alignment.normalize_for_logging(str(self.source_token(source_seq))),
                         self.align_type,
-                        Alignment.normalize_for_logging(self.target_token(target_seq)))
+                        Alignment.normalize_for_logging(str(self.target_token(target_seq))))
                 )
 
     def __eq__(self, other):
