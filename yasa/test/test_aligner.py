@@ -20,7 +20,8 @@ def run_aligner(aligner, source, target, pretty=True):
         print alignment
         print "+" * 10, "  Alignment Time = {} ms  ".format((t1 - t0) * 1000), "+" * 10
         print
-        summary = yasa.AlignmentErrorRate(alignment)
+        summary = yasa.AlignmentErrorRate()
+        summary.accu_alignment(alignment)
         print(summary)
     else:
         print alignment

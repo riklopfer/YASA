@@ -2,8 +2,9 @@ from __future__ import division
 
 __all__ = ['ErrorRate', 'AlignmentErrorRate']
 
-_ERROR_RATE_HEADER_FORMAT = '{:<30}{:<10}{:<10}{:<10}{:<10}\n'
-_ERROR_RATE_FORMAT = '{:<30}{:<10.3f}{:<10.3f}{:<10.3f}{:<10.3f}'
+_error_rate_header_format = '{:<30}{:<10}{:<10}{:<10}{:<10}\n'
+_align_error_header = _error_rate_header_format.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
+_error_rate_format = '{:<30}{:<10.3f}{:<10.3f}{:<10.3f}{:<10.3f}'
 
 
 class ErrorRate(object):
@@ -43,14 +44,16 @@ class ErrorRate(object):
         return self.true_positives / (self.true_positives + self.false_negatives + self.false_positives)
 
     def __str__(self):
-        return _ERROR_RATE_FORMAT.format(self.token, self.precision,
+        return _error_rate_format.format(self.token, self.precision,
                                          self.recall, self.f1,
                                          self.accuracy)
 
 
 class AlignmentErrorRate(object):
-    def __init__(self, alignment):
+    def __init__(self):
         self.token_error_rates = dict()
+
+    def accu_alignment(self, alignment):
         for source, target in alignment.as_tuples():
             self.accu_tuple(source, target)
 
@@ -69,7 +72,7 @@ class AlignmentErrorRate(object):
         return self.token_error_rates.get(token)
 
     def __str__(self):
-        s = _ERROR_RATE_HEADER_FORMAT.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
+        s = _align_error_header
         for error_rate in self.token_error_rates.values():
             if error_rate.accuracy < 1:
                 s += '{}\n'.format(error_rate)
