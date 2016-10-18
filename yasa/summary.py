@@ -2,9 +2,9 @@ from __future__ import division
 
 __all__ = ['ErrorRate', 'AlignmentErrorRate']
 
-_error_rate_header_format = '{:<30}{:<10}{:<10}{:<10}{:<10}\n'
+_error_rate_header_format = '{:<32}{:<12}{:<12}{:<12}{:<12}\n'
 _align_error_header = _error_rate_header_format.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
-_error_rate_format = '{:<30}{:<10.3f}{:<10.3f}{:<10.3f}{:<10.3f}'
+_error_rate_format = '{:<32}{:<12.3f}{:<12.3f}{:<12.3f}{:<12.3f}'
 
 
 class ErrorRate(object):
