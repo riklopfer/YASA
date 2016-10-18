@@ -72,8 +72,13 @@ class AlignmentErrorRate(object):
         return self.token_error_rates.get(token)
 
     def __str__(self):
+        return self.as_string()
+
+    def as_string(self, tokens=None):
         s = _align_error_header
-        for error_rate in self.token_error_rates.values():
+        target_keys = tokens if tokens is not None else self.token_error_rates.keys()
+        for key in target_keys:
+            error_rate = self.token_error_rates[key]
             if error_rate.accuracy < 1:
                 s += '{}\n'.format(error_rate)
         return s
