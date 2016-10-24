@@ -218,11 +218,25 @@ def test_error_counts_2():
         print '{}\t{}'.format(error, count)
 
 
+def test_bad_error_key():
+    __announce_test('Bad error key')
+    source = __get_words("a b b a")
+    target = __get_words("a x x i s s s s s")
+
+    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
+
+    err = yasa.AlignmentErrorRate()
+    err.accu_alignment(alignment)
+
+    print(err.as_string(tokens=['a', 'b', 'x', 'bad']))
+
+
 def run_all_tests():
     # known_weirdness()
 
     default_aligner_tests()
     test_non_string_alignment()
+    test_bad_error_key()
     # big_word_test()
     # get_errors_test()
     # get_error_counts_test()
