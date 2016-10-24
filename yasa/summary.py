@@ -79,7 +79,7 @@ class AlignmentErrorRate(object):
         if tokens is not None:
             for key in tokens:
                 if key not in self.token_error_rates:
-                    s += '{:<32}{}'.format(key, 'TOKEN NOT OBSERVED')
+                    s += '{:<32}{}\n'.format(key, 'TOKEN NOT OBSERVED')
                 else:
                     error_rate = self.token_error_rates[key]
                     s += '{}\n'.format(error_rate)

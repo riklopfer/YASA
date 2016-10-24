@@ -228,7 +228,7 @@ def test_bad_error_key():
     err = yasa.AlignmentErrorRate()
     err.accu_alignment(alignment)
 
-    print(err.as_string(tokens=['a', 'b', 'x', 'bad']))
+    print(err.as_string(tokens=['a', 'b', 'x', 'bad', 'poopy']))
 
 
 def run_all_tests():
