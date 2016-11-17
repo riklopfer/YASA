@@ -24,6 +24,21 @@ class ErrorRate(object):
         elif target == self.token:
             self.false_positives += 1
 
+    def sum(self, other):
+        """
+        Return a new error rate which is the sum of this one and the next.
+        :param other:
+        :return:
+
+        :type other: ErrorRate
+        :rtype: ErrorRate
+        """
+        merged = ErrorRate(self.token)
+        merged.false_positives = self.false_positives + other.false_positives
+        merged.false_negatives = self.false_negatives + other.false_negatives
+        merged.true_positives = self.true_positives + other.true_positives
+        return merged
+
     @property
     def precision(self):
         denominator = self.true_positives + self.false_positives
