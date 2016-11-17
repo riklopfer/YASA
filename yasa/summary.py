@@ -1,9 +1,9 @@
 from __future__ import division
 
-__all__ = ['ErrorRate', 'AlignmentErrorRate']
+__all__ = ['ErrorRate', 'AlignmentErrorRate', 'ERROR_RATE_HEADER']
 
 _error_rate_header_format = '{:<32}{:<12}{:<12}{:<12}{:<12}\n'
-_align_error_header = _error_rate_header_format.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
+ERROR_RATE_HEADER = _error_rate_header_format.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
 _error_rate_format = '{:<32}{:<12.3f}{:<12.3f}{:<12.3f}{:<12.3f}'
 
 
@@ -90,11 +90,11 @@ class AlignmentErrorRate(object):
         return self.as_string()
 
     def as_string(self, tokens=None):
-        s = _align_error_header
+        s = ERROR_RATE_HEADER
         if tokens is not None:
             for key in tokens:
                 if key not in self.token_error_rates:
-                    s += '{:<32}{}\n'.format(key, 'TOKEN NOT OBSERVED')
+                    s += '{:<32}{}\n'.format(key, 'NOT OBSERVED')
                 else:
                     error_rate = self.token_error_rates[key]
                     s += '{}\n'.format(error_rate)
