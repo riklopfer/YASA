@@ -15,13 +15,13 @@ class ErrorRate(object):
         self.false_negatives = 0
         self.true_positives = 0
 
-    def accu_tuple(self, source, target):
-        if source == target:
-            if source == self.token:
+    def accu_tuple(self, ref, hyp):
+        if ref == hyp:
+            if ref == self.token:
                 self.true_positives += 1
-        elif source == self.token:
+        elif ref == self.token:
             self.false_negatives += 1
-        elif target == self.token:
+        elif hyp == self.token:
             self.false_positives += 1
 
     def sum(self, other):
@@ -56,6 +56,7 @@ class ErrorRate(object):
 
     @property
     def accuracy(self):
+        # num correct / number of occurrences (either ref or hyp)
         return self.true_positives / (self.true_positives + self.false_negatives + self.false_positives)
 
     def __str__(self):
@@ -69,19 +70,19 @@ class AlignmentErrorRate(object):
         self.token_error_rates = dict()
 
     def accu_alignment(self, alignment):
-        for source, target in alignment.as_tuples():
-            self.accu_tuple(source, target)
+        for ref, hyp in alignment.as_tuples():
+            self.accu_tuple(ref, hyp)
 
-    def accu_tuple(self, source, target):
-        if source is not None:
-            if source not in self.token_error_rates:
-                self.token_error_rates[source] = ErrorRate(source)
-            self.token_error_rates[source].accu_tuple(source, target)
+    def accu_tuple(self, ref, hyp):
+        if ref is not None:
+            if ref not in self.token_error_rates:
+                self.token_error_rates[ref] = ErrorRate(ref)
+            self.token_error_rates[ref].accu_tuple(ref, hyp)
 
-        if target is not None:
-            if target not in self.token_error_rates:
-                self.token_error_rates[target] = ErrorRate(target)
-            self.token_error_rates[target].accu_tuple(source, target)
+        if hyp is not None:
+            if hyp not in self.token_error_rates:
+                self.token_error_rates[hyp] = ErrorRate(hyp)
+            self.token_error_rates[hyp].accu_tuple(ref, hyp)
 
     def get_error_rate(self, token):
         return self.token_error_rates.get(token)
