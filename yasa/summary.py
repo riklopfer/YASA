@@ -113,4 +113,4 @@ class WordErrorRate(object):
         return 1 - self.wer
 
     def __str__(self):
-        return 'WER: {} Correct: {} Incorrect: {}'.format(self.wer, self.correct, self.incorrect)
+        return 'WER: {:.5f} Correct: {} Incorrect: {}'.format(self.wer, self.correct, self.incorrect)
