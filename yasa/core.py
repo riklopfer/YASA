@@ -51,7 +51,7 @@ class Alignment(object):
         :rtype: tuple
         """
         # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
-        errors = map(lambda n: SortableNode(n, self.source_seq, self.target_seq), self.errors())
+        errors = map(lambda node: SortableNode(node, self.source_seq, self.target_seq), self.errors())
         errors.sort()
         error_counts = map(lambda (k, g): (k, len(list(g))), itertools.groupby(errors))
         error_counts.sort(key=lambda (e, c): -c)

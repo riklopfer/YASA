@@ -1,15 +1,15 @@
 from __future__ import division
 
-__all__ = ['ErrorRate', 'AlignmentErrorRate', 'ERROR_RATE_HEADER']
+__all__ = ['LabelErrorRate', 'ClassifierErrorRate', 'WordErrorRate', 'ERROR_RATE_HEADER']
 
 _error_rate_header_format = '{:<32}{:<12}{:<12}{:<12}{:<12}'
-ERROR_RATE_HEADER = _error_rate_header_format.format('Token', 'Precision', 'Recall', 'F1', 'Accuracy')
+ERROR_RATE_HEADER = _error_rate_header_format.format('Label', 'Precision', 'Recall', 'F1', 'Accuracy')
 _error_rate_format = '{:<32}{:<12.3f}{:<12.3f}{:<12.3f}{:<12.3f}'
 
 
-class ErrorRate(object):
-    def __init__(self, token):
-        self.token = token
+class LabelErrorRate(object):
+    def __init__(self, label):
+        self.label = label
 
         self.false_positives = 0
         self.false_negatives = 0
@@ -17,27 +17,12 @@ class ErrorRate(object):
 
     def accu_tuple(self, ref, hyp):
         if ref == hyp:
-            if ref == self.token:
+            if ref == self.label:
                 self.true_positives += 1
-        elif ref == self.token:
+        elif ref == self.label:
             self.false_negatives += 1
-        elif hyp == self.token:
+        elif hyp == self.label:
             self.false_positives += 1
-
-    def sum(self, other):
-        """
-        Return a new error rate which is the sum of this one and the next.
-        :param other:
-        :return:
-
-        :type other: ErrorRate
-        :rtype: ErrorRate
-        """
-        merged = ErrorRate(self.token)
-        merged.false_positives = self.false_positives + other.false_positives
-        merged.false_negatives = self.false_negatives + other.false_negatives
-        merged.true_positives = self.true_positives + other.true_positives
-        return merged
 
     @property
     def precision(self):
@@ -60,12 +45,12 @@ class ErrorRate(object):
         return self.true_positives / (self.true_positives + self.false_negatives + self.false_positives)
 
     def __str__(self):
-        return _error_rate_format.format(self.token, self.precision,
+        return _error_rate_format.format(self.label, self.precision,
                                          self.recall, self.f1,
                                          self.accuracy)
 
 
-class AlignmentErrorRate(object):
+class ClassifierErrorRate(object):
     def __init__(self):
         self.token_error_rates = dict()
         self.overall = ErrorRate(None)
@@ -78,27 +63,26 @@ class AlignmentErrorRate(object):
     def accu_tuple(self, ref, hyp):
         if ref is not None:
             if ref not in self.token_error_rates:
-                self.token_error_rates[ref] = ErrorRate(ref)
+                self.token_error_rates[ref] = LabelErrorRate(ref)
+
             self.token_error_rates[ref].accu_tuple(ref, hyp)
 
         if hyp is not None:
             if hyp not in self.token_error_rates:
-                self.token_error_rates[hyp] = ErrorRate(hyp)
+                self.token_error_rates[hyp] = LabelErrorRate(hyp)
+
             self.token_error_rates[hyp].accu_tuple(ref, hyp)
 
-    def get_error_rate(self, token):
-        return self.token_error_rates.get(token)
+    def get_error_rate(self, label):
+        return self.token_error_rates.get(label)
 
     def __str__(self):
         return self.as_string()
 
-    def as_string(self, tokens=None):
-        s = "{:-^80}\n".format("Overall")
-        s += str(self.overall) + "\n"
-
-        s += ERROR_RATE_HEADER + '\n'
-        if tokens is not None:
-            for key in tokens:
+    def as_string(self, labels=None):
+        s = ERROR_RATE_HEADER + '\n'
+        if labels is not None:
+            for key in labels:
                 if key not in self.token_error_rates:
                     s += '{:<32}{}\n'.format(key, 'NOT OBSERVED')
                 else:
@@ -109,3 +93,24 @@ class AlignmentErrorRate(object):
                 if error_rate.accuracy < 1:
                     s += '{}\n'.format(error_rate)
         return s
+
+
+class WordErrorRate(object):
+    def __init__(self):
+        self.correct = 0
+        self.incorrect = 0
+
+    def accu_alignment(self, alignment):
+        self.correct += alignment.correct_n()
+        self.incorrect += alignment.errors_n()
+
+    @property
+    def wer(self):
+        return self.incorrect / (self.correct + self.incorrect)
+
+    @property
+    def wacc(self):
+        return 1 - self.wer
+
+    def __str__(self):
+        return 'WER: {} Correct: {} Incorrect: {}'.format(self.wer, self.correct, self.incorrect)
