@@ -68,9 +68,11 @@ class ErrorRate(object):
 class AlignmentErrorRate(object):
     def __init__(self):
         self.token_error_rates = dict()
+        self.overall = ErrorRate(None)
 
     def accu_alignment(self, alignment):
         for ref, hyp in alignment.as_tuples():
+            self.overall.accu_tuple(ref, hyp)
             self.accu_tuple(ref, hyp)
 
     def accu_tuple(self, ref, hyp):
@@ -91,7 +93,10 @@ class AlignmentErrorRate(object):
         return self.as_string()
 
     def as_string(self, tokens=None):
-        s = ERROR_RATE_HEADER + '\n'
+        s = "{:-^80}\n".format("Overall")
+        s += str(self.overall) + "\n"
+
+        s += ERROR_RATE_HEADER + '\n'
         if tokens is not None:
             for key in tokens:
                 if key not in self.token_error_rates:
