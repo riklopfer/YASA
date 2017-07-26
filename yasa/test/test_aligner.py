@@ -20,7 +20,7 @@ def run_aligner(aligner, source, target, pretty=True):
         print alignment
         print "+" * 10, "  Alignment Time = {} ms  ".format((t1 - t0) * 1000), "+" * 10
         print
-        summary = yasa.AlignmentErrorRate()
+        summary = yasa.ClassifierErrorRate()
         summary.accu_alignment(alignment)
         print(summary)
     else:
@@ -225,10 +225,10 @@ def test_bad_error_key():
 
     alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
 
-    err = yasa.AlignmentErrorRate()
+    err = yasa.ClassifierErrorRate()
     err.accu_alignment(alignment)
 
-    print(err.as_string(tokens=['a', 'b', 'x', 'bad', 'poopy']))
+    print(err.as_string(labels=['a', 'b', 'x', 'bad', 'poopy']))
 
 
 def run_all_tests():
