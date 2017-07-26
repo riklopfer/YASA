@@ -53,7 +53,7 @@ class LabelErrorRate(object):
 class ClassifierErrorRate(object):
     def __init__(self):
         self.token_error_rates = dict()
-        self.overall = ErrorRate(None)
+        self.overall = LabelErrorRate(None)
 
     def accu_alignment(self, alignment):
         for ref, hyp in alignment.as_tuples():
