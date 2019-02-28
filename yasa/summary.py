@@ -62,7 +62,7 @@ class ClassifierErrorRate(object):
     self.overall = LabelErrorRate(None)
 
   def accu_alignment(self, alignment):
-    for ref, hyp in alignment.as_tuples():
+    for ref, hyp in alignment:
       self.overall.accu_tuple(ref, hyp)
       self.accu_tuple(ref, hyp)
 

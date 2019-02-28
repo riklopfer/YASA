@@ -52,8 +52,8 @@ class Alignment(object):
     """
     # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
     errors = map(
-      lambda node: SortableNode(node, self.source_seq, self.target_seq),
-      self.errors())
+        lambda node: SortableNode(node, self.source_seq, self.target_seq),
+        self.errors())
     errors.sort()
     error_counts = map(lambda (k, g): (k, len(list(g))),
                        itertools.groupby(errors))
@@ -93,10 +93,10 @@ class Alignment(object):
     err_n = float(self.errors_n())
     return err_n / (err_n + self.correct_n())
 
-  def as_tuples(self):
-    return [
-      (node.source_token(self.source_seq), node.target_token(self.target_seq))
-      for node in self.__nodes]
+  def __iter__(self):
+    for node in self.__nodes:
+      yield (node.source_token(self.source_seq),
+             node.target_token(self.target_seq))
 
   def __str__(self):
     return ("size={} len(source)={}, len(target)={}, cost={}, WER={}"
@@ -175,11 +175,11 @@ class AlignmentNode(object):
 
   def pretty_print(self, source_seq, target_seq):
     return ("{:<30}{:^10}{:>30}"
-            .format(
-      Alignment.normalize_for_logging(str(self.source_token(source_seq))),
-      self.align_type,
-      Alignment.normalize_for_logging(str(self.target_token(target_seq))))
-            )
+      .format(
+        Alignment.normalize_for_logging(str(self.source_token(source_seq))),
+        self.align_type,
+        Alignment.normalize_for_logging(str(self.target_token(target_seq))))
+    )
 
   def __eq__(self, other):
     if other is None:
