@@ -1,5 +1,7 @@
 from __future__ import division
 
+import itertools
+
 __all__ = ['LabelErrorRate', 'ClassifierErrorRate', 'WordErrorRate',
            'ERROR_RATE_HEADER']
 
@@ -7,6 +9,96 @@ _error_rate_header_format = '{:<32}{:<12}{:<12}{:<12}{:<12}'
 ERROR_RATE_HEADER = _error_rate_header_format.format('Label', 'Precision',
                                                      'Recall', 'F1', 'Accuracy')
 _error_rate_format = '{:<32}{:<12.3f}{:<12.3f}{:<12.3f}{:<12.3f}'
+
+
+def error_counts(alignment):
+  """
+  Count errors.
+  :type alignment: aligner.Alignment
+  :return: (error, count) pairs
+  :rtype: list[(basestring,basestring)]
+  """
+  # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
+  errors = map(
+      lambda node: Error.construct(node,
+                                   alignment.source_seq,
+                                   alignment.target_seq),
+      alignment.errors())
+  errors.sort()
+  error_counts = map(lambda (k, g): (k, len(list(g))),
+                     itertools.groupby(errors))
+  error_counts.sort(key=lambda (e, c): -c)
+  return error_counts
+
+
+class Error(object):
+  def __init__(self, source, target, align_type):
+    """
+    :type source: basestring
+    :type target: basestring
+    :type align_type: basestring
+
+    :param source:
+    :param target:
+    :param align_type:
+    """
+    self._source = source
+    self._target = target
+    self._align_type = align_type
+
+  @staticmethod
+  def construct(alignment_node, source, target):
+    """
+    Constructor
+    :param alignment_node:
+    :type alignment_node: AlignmentNode
+    :return:
+    """
+    return Error(alignment_node.source_token(source),
+                 alignment_node.target_token(target),
+                 alignment_node.align_type)
+
+  @property
+  def source(self):
+    return self._source
+
+  @property
+  def target(self):
+    return self._target
+
+  @property
+  def align_type(self):
+    return self._align_type
+
+  def _key(self):
+    return '{}{}{}'.format(self.source, self.target, self.align_type)
+
+  def __str__(self):
+    return u"{:30}{:5}{:>30}".format(self.source, self.align_type, self.target)
+
+  def __lt__(self, other):
+    """
+    Less than comparison
+    :param other:
+    :type other: Error
+    :return:
+    """
+    return self._key() < other._key()
+
+  def __eq__(self, other):
+    """
+    Equals
+    :param other:
+    :type other: Error
+    :return:
+    """
+    if other is None:
+      return False
+
+    return (self.align_type == other.align_type and
+            self.source == other.source and
+            self.target == other.target
+            )
 
 
 class LabelErrorRate(object):
@@ -30,25 +122,25 @@ class LabelErrorRate(object):
   def precision(self):
     denominator = self.true_positives + self.false_positives
     return self.true_positives / denominator if denominator > 0 else float(
-      'NaN')
+        'NaN')
 
   @property
   def recall(self):
     denominator = self.true_positives + self.false_negatives
     return self.true_positives / denominator if denominator > 0 else float(
-      'NaN')
+        'NaN')
 
   @property
   def f1(self):
     denominator = self.precision + self.recall
     return 2 * (
-          self.precision * self.recall) / denominator if denominator > 0 else 0.
+        self.precision * self.recall) / denominator if denominator > 0 else 0.
 
   @property
   def accuracy(self):
     # num correct / number of occurrences (either ref or hyp)
     return self.true_positives / (
-          self.true_positives + self.false_negatives + self.false_positives)
+        self.true_positives + self.false_negatives + self.false_positives)
 
   def __str__(self):
     return _error_rate_format.format(self.label, self.precision,

@@ -178,17 +178,22 @@ class TestErrorRates(unittest.TestCase):
 
     alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
     print(alignment)
-    for (error, count) in alignment.error_counts():
+    error_counts = yasa.error_counts(alignment)
+    for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
+
+    self.assertEqual(3, len(error_counts))
 
   def test_error_counts_2(self):
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
     alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
-    print(alignment)
-    for (error, count) in alignment.error_counts():
+    error_counts = yasa.error_counts(alignment)
+    for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
+
+    self.assertEqual(3, len(error_counts))
 
   def test_bad_error_key(self):
     source = get_words("a b b a")
