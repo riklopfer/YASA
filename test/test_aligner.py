@@ -64,17 +64,16 @@ def jumble(tokens):
         tokens[i] = swap
 
 
-def load_declaration(copies=1):
+def load_declaration():
   """
   Load the declaration of independence repeated n times.
-  :param copies:
   :return:
   """
   print("Loading declaration...", end=' ')
   with open('declaration.txt', 'rb') as fp:
     text = fp.read()
   print("Done")
-  return text * copies
+  return text
 
 
 WORD_SOURCE_TARGET_PAIRS = [
@@ -129,18 +128,9 @@ def get_chars(text):
 class WordAlignmentTests(unittest.TestCase):
 
   def test_big_text(self):
-    copies_of_declaration = 3
-    text = load_declaration(3)
-    target = get_words(text)
-    source = get_words(text)
-    source = del_some(source)
-    target = del_some(target)
-
-    # print "SOURCE"
-    # print " ".join(source)
-    # print "TARGET"
-    # print " ".join(target)
-
+    text = load_declaration() * 3
+    target = del_some(get_words(text))
+    source = del_some(get_words(text))
     run_aligner(source, target, 'nested', True)
 
   def test_default(self):
@@ -148,11 +138,19 @@ class WordAlignmentTests(unittest.TestCase):
       run_aligner(get_words(source), get_words(target), 'nested')
 
   def test_basic(self):
-    source = "this is a test of the beam aligner"
-    target = "that was a test of the bean aligner"
+    source = "this is a test of the beam aligner".split()
+    target = "that was a test of the bean aligner".split()
 
     aligner = yasa.LevinshteinAligner(1, 50)
-    word_alignment = aligner.align(source.split(" "), target.split(" "))
+    word_alignment = aligner.align(source, target)
+    print(word_alignment.pretty_print())
+
+  def test_basic_nested(self):
+    source = "this is a test of the beam aligner".split() * 2
+    target = "that was a test of the bean".split() * 2
+
+    aligner = yasa.NestedLevinshteinAligner(10, 100)
+    word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
 

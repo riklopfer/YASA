@@ -77,21 +77,17 @@ class NestedLevinshteinScoring(Scoring):
     self._aligner = LevinshteinAligner(beam_width, heap_size)
 
   def deletion(self, token):
-    return 1
+    return len(token)
 
   def insertion(self, token):
-    return 1
+    return len(token)
 
-  def match(self, source, target):
-    return 0
+  def match(self, token):
+    # we really like matches
+    return -len(token) * 1.5
 
   def substitution(self, source, target):
-    align_cost = self._aligner.align(source, target).cost
-    align_ratio = align_cost / min(len(source), len(target))
-    if align_ratio < 0.5:
-      return (1 + align_ratio) / 2
-    else:
-      return 1
+    return self._aligner.align(source, target).cost
 
 
 class NestedLevinshteinAligner(Aligner):
@@ -108,4 +104,4 @@ class NestedLevinshteinAligner(Aligner):
     """
     super(NestedLevinshteinAligner,
           self).__init__(beam_width, heap_size,
-                         NestedLevinshteinScoring(1, 5))
+                         NestedLevinshteinScoring(5, 10))

@@ -91,7 +91,10 @@ class Alignment(object):
     :rtype: float
     """
     err_n = float(self.errors_n())
-    return err_n / (err_n + self.correct_n())
+    if err_n:
+      return err_n / (err_n + self.correct_n())
+    else:
+      return 0.
 
   def __iter__(self):
     for node in self.__nodes:
@@ -253,7 +256,7 @@ class Scoring(object):
   def substitution(self, source, target):
     raise NotImplementedError
 
-  def match(self, source, target):
+  def match(self, token):
     return 0.
 
 
@@ -293,11 +296,13 @@ class Aligner(object):
     :rtype: str
     """
     n = len(heap) if n is None else min(n, len(heap))
-    heap_string = "************HEAP**************\n({}) [[[".format(len(heap))
-    for i in xrange(n - 1, 0, -1):
-      heap_string += "{}.) {}\n".format(i, Alignment(heap[i], source,
-                                                     target).pretty_print())
-    return heap_string + "]]]"
+    heap_string = "************HEAP (size={})**************\n".format(len(heap))
+    for idx, node in enumerate(heap[:n][::-1]):
+      if n and n == idx:
+        break
+      tmp_align = Alignment(node, source, target)
+      heap_string += "{}.) {}\n".format(n - idx, tmp_align.pretty_print())
+    return heap_string
 
   @staticmethod
   def _add_new_node(node_list, node):
@@ -332,11 +337,12 @@ class Aligner(object):
 
     while (current_heap[0].sourcePos < len(source) - 1 or
            current_heap[0].targetPos < len(target) - 1):
-      # print(Aligner.heap_to_string(current_heap, source, target, 5))
       next_heap = []
       for node in current_heap:
         self._populate_nodes(next_heap, node, source, target)
       current_heap = Aligner._prune(next_heap, self.beam_width, self.heap_size)
+      # print(Aligner.heap_to_string(current_heap, source, target, 5))
+      # pass
 
     return Alignment(current_heap[0], source, target)
 
@@ -362,7 +368,7 @@ class Aligner(object):
       return AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1,
                            target_x + 1,
                            previous_node.cost + self.scorer.match(
-                               source[source_x], target[target_x]))
+                               source[source_x]))
 
     def substitution():
       return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1,
