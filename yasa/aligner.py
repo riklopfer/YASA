@@ -6,7 +6,8 @@ Author: Russell Klopfer
 from repoze.lru import lru_cache
 
 __all__ = ['Aligner', 'Scoring',
-           'LevinshteinAligner', 'NestedLevinshteinAligner']
+           'LevinshteinAligner',
+           'NestedLevinshteinAligner']
 
 
 class Alignment(object):
@@ -180,6 +181,9 @@ class AlignmentNode(object):
         self.targetPos == other.targetPos
     )
 
+  def __repr__(self):
+    return str(self)
+
   def __str__(self):
     return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
       self.align_type, self.sourcePos, self.targetPos, self.cost)
@@ -197,6 +201,86 @@ class Scoring(object):
 
   def match(self, token):
     return 0.
+
+
+class _HeapThing(object):
+  def __init__(self, beam, max_size):
+    """
+    :type beam: float
+    :type max_size: int
+    :param beam:
+    :param max_size:
+    """
+    self._beam = beam
+    self._max_size = max_size
+
+    self._node_list = []
+    self._is_sorted = True
+
+  def __len__(self):
+    return len(self._node_list)
+
+  def __iter__(self):
+    self._sort()
+    for node in self._node_list:
+      yield node
+
+  def to_string(self, source, target, n=None):
+    """
+    Prints the top-n elements of the heap.
+
+    :param source:
+    :param target:
+    :param n:
+
+    :rtype: basestring
+    """
+    n = len(self) if n is None else min(n, len(self))
+    heap_string = "************HEAP (size={})**************\n".format(len(self))
+    for idx, node in enumerate(self._node_list[:n][::-1]):
+      if n and n == idx:
+        break
+      tmp_align = Alignment(node, source, target)
+      heap_string += "{}.) {}\n".format(n - idx, tmp_align.pretty_print())
+    return heap_string
+
+  def add(self, node):
+    """
+
+    :param node:
+    :return:
+    :rtype: None
+    """
+    self._is_sorted = False
+    self._node_list.append(node)
+
+  def _sort(self):
+    if self._is_sorted:
+      return
+
+    self._node_list.sort(key=lambda node: node.cost)
+    self._is_sorted = True
+
+  @property
+  def top(self):
+    """:rtype: AlignmentNode"""
+    self._sort()
+    return self._node_list[0]
+
+  def prune(self):
+    """Prune the list"""
+    self._sort()
+    if self._beam > 0:
+      best = self.top.cost
+      idx = 1
+      for idx in xrange(1, len(self)):
+        if self._node_list[idx].cost > best + self._beam:
+          break
+      assert idx > 0
+      self._node_list = self._node_list[:idx]
+
+    if self._max_size > 0:
+      self._node_list = self._node_list[:min(self._max_size, len(self))]
 
 
 class Aligner(object):
@@ -221,48 +305,12 @@ class Aligner(object):
     self.heap_size = heap_size
     self.scorer = scorer
 
+  def _new_heap(self):
+    return _HeapThing(self.beam_width, self.heap_size)
+
   def __str__(self):
     return ("beam_width: {}, heap_size: {}, scorer: {}".
             format(self.beam_width, self.heap_size, self.scorer))
-
-  @staticmethod
-  def heap_to_string(heap, source, target, n=None):
-    """
-    Prints the top-n elements of the heap.
-
-    :param heap:
-    :param n:
-    :rtype: str
-    """
-    n = len(heap) if n is None else min(n, len(heap))
-    heap_string = "************HEAP (size={})**************\n".format(len(heap))
-    for idx, node in enumerate(heap[:n][::-1]):
-      if n and n == idx:
-        break
-      tmp_align = Alignment(node, source, target)
-      heap_string += "{}.) {}\n".format(n - idx, tmp_align.pretty_print())
-    return heap_string
-
-  @staticmethod
-  def _add_new_node(node_list, node):
-    node_list.append(node)
-
-  @staticmethod
-  def _prune(node_list, beam_width, max_size):
-    """
-    Prune the node list given a beam width and max size
-    :param node_list:
-    :param beam_width:
-    :param max_size:
-    :return:
-    """
-    pruned = sorted(node_list, key=lambda node: node.cost)
-    if beam_width > 0 and node_list:
-      best = node_list[0].cost
-      pruned = filter(lambda _node: _node.cost < best + beam_width, pruned)
-    if max_size > 0:
-      pruned = pruned[:min(max_size, len(node_list))]
-    return pruned
 
   def align(self, source, target):
     """
@@ -272,18 +320,21 @@ class Aligner(object):
     :return:
     :rtype: Alignment
     """
-    current_heap = [Aligner.START_NODE]
+    current_heap = self._new_heap()
+    current_heap.add(Aligner.START_NODE)
 
-    while (current_heap[0].sourcePos < len(source) - 1 or
-           current_heap[0].targetPos < len(target) - 1):
-      next_heap = []
+    while (current_heap.top.sourcePos < len(source) - 1 or
+           current_heap.top.targetPos < len(target) - 1):
+      next_heap = self._new_heap()
       for node in current_heap:
         self._populate_nodes(next_heap, node, source, target)
-      current_heap = Aligner._prune(next_heap, self.beam_width, self.heap_size)
+      next_heap.prune()
+      current_heap = next_heap
+      # current_heap = Aligner._prune(next_heap, self.beam_width, self.heap_size)
       # print(Aligner.heap_to_string(current_heap, source, target, 5))
       # pass
 
-    return Alignment(current_heap[0], source, target)
+    return Alignment(current_heap.top, source, target)
 
   def _populate_nodes(self, next_heap, previous_node, source, target):
     source_x = previous_node.sourcePos
@@ -318,32 +369,32 @@ class Aligner(object):
 
     # we're at the end of the alignment already
     if source_finished and target_finished:
-      Aligner._add_new_node(next_heap, previous_node)
+      next_heap.add(previous_node)
       return
 
     # we're at the end of the source sequence, this must be an insertion
     if source_finished:
-      Aligner._add_new_node(next_heap, insertion())
+      next_heap.add(insertion())
       # print insertion().pretty_print(source, target)
       return
 
     # we're at the end of the target sequence, this must be a deletion
     if target_finished:
-      Aligner._add_new_node(next_heap, deletion())
+      next_heap.add(deletion())
       # print deletion().pretty_print(source, target)
       return
 
     # match
     if source[source_x + 1] == target[target_x + 1]:
-      Aligner._add_new_node(next_heap, match())
+      next_heap.add(match())
     # sub
     else:
-      Aligner._add_new_node(next_heap, substitution())
+      next_heap.add(substitution())
 
     # always allow for insertions
-    Aligner._add_new_node(next_heap, insertion())
+    next_heap.add(insertion())
     # and deletions
-    Aligner._add_new_node(next_heap, deletion())
+    next_heap.add(deletion())
 
 
 class LevinshteinScoring(Scoring):
@@ -426,7 +477,7 @@ class NestedLevinshteinScoring(Scoring):
 
   def match(self, token):
     # we really like matches
-    return -len(token) * 1.5
+    return -len(token) * 1.2
 
   @lru_cache(10000)
   def substitution(self, source, target):
