@@ -25,7 +25,7 @@ source = "this is a test of the beam aligner".split()
 target = "that was a test of the bean aligner".split()
 
 # create the aligner
-aligner = yasa.LevinshteinAligner(1, 50)
+aligner = yasa.LevinshteinAligner(beam_width=5, heap_size=50)
 # do the alignment
 word_alignment = aligner.align(source, target)
 # pretty print
