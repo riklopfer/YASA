@@ -4,6 +4,8 @@ Author: Russell Klopfer
 """
 import itertools
 
+from repoze.lru import lru_cache
+
 __all__ = ['Aligner', 'Scoring',
            'LevinshteinAligner', 'NestedLevinshteinAligner']
 
@@ -408,8 +410,6 @@ class Aligner(object):
     Aligner._add_new_node(next_heap, deletion())
 
 
-
-
 class LevinshteinScoring(Scoring):
   """
   Levinshtein distance
@@ -434,6 +434,7 @@ class LevinshteinScoring(Scoring):
 """
 Scoring / Aligner Implementations
 """
+
 
 class LevinshteinAligner(Aligner):
   """
@@ -491,6 +492,7 @@ class NestedLevinshteinScoring(Scoring):
     # we really like matches
     return -len(token) * 1.5
 
+  @lru_cache(10000)
   def substitution(self, source, target):
     return self._aligner.align(source, target).cost
 
