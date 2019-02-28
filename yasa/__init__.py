@@ -1,8 +1,9 @@
-import core as _core
-import extensions as _ext
+import aligner
+import summary
 
-from summary import ClassifierErrorRate
-from extensions import LevinshteinAligner, NestedLevinshteinAligner
+from aligner import NestedLevinshteinAligner, LevinshteinAligner, Aligner, Scoring
+
+from summary import ClassifierErrorRate, LabelErrorRate
 
 def __mk_aligner(beam, heap, scoring):
   """
@@ -18,9 +19,9 @@ def __mk_aligner(beam, heap, scoring):
   """
   scoring = scoring.lower()
   if scoring == 'levinshtein':
-    return _ext.LevinshteinAligner(beam, heap)
+    return LevinshteinAligner(beam, heap)
   elif scoring == 'nested':
-    return _ext.NestedLevinshteinAligner(beam, heap)
+    return NestedLevinshteinAligner(beam, heap)
   else:
     raise ValueError(u"Unknown scoring type: '{}'".format(scoring))
 
