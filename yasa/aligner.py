@@ -91,7 +91,7 @@ class Alignment(object):
 
   def __repr__(self):
     return str(self)
-  
+
   def __str__(self):
     return self.pretty_print()
 
@@ -351,6 +351,7 @@ class Aligner(object):
 
   def align(self, source, target):
     """
+    Generate alignment between source and target.
 
     :param source:
     :param target:
@@ -388,8 +389,8 @@ class Aligner(object):
     """
     source_x = previous_node.source_pos
     target_x = previous_node.target_pos
-    source_finished = source_x >= len(source) - 1
-    target_finished = target_x >= len(target) - 1
+    source_finished = source_x == len(source) - 1
+    target_finished = target_x == len(target) - 1
 
     def insertion():
       return Insertion(previous_node,
@@ -409,26 +410,34 @@ class Aligner(object):
                                                    target[target_x + 1])
                           )
 
-    # we're at the end of the alignment already
+    # we're at the end of the alignment already. just copy the previous node
+    # into the next heap.
     if source_finished and target_finished:
       next_heap.add(previous_node)
       return
 
-    # we're at the end of the source sequence, this must be an insertion
+    # we're at the end of the source sequence. this must be an insertion.
     if source_finished:
       next_heap.add(insertion())
       return
 
-    # we're at the end of the target sequence, this must be a deletion
+    # we're at the end of the target sequence. this must be a deletion.
     if target_finished:
       next_heap.add(deletion())
       return
 
-    # match
+    """
+    Now add the all 3 possible next actions, which are:
+    (1) Match or Substitution
+    (2) Insertion
+    (3) Deletion
+    """
+
     if source[source_x + 1] == target[target_x + 1]:
+      # match
       next_heap.add(match())
-    # sub
     else:
+      # sub
       next_heap.add(substitution())
 
     # always allow for insertions
