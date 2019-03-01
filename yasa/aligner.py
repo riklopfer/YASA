@@ -124,7 +124,7 @@ def _normalize_for_logging(s):
   if not s:
     return s
 
-  return s.replace("\n", "\\n").replace(' ', '<sp>')
+  return s.replace(u"\n", u"\\n").replace(u' ', 'u<sp>')
 
 
 class AlignmentNode(object):
@@ -170,11 +170,11 @@ class AlignmentNode(object):
     return target_seq[self.target_pos]
 
   def pretty_print(self, source_seq, target_seq):
-    return ("{:<30}{:^10}{:>30}"
+    return (u"{:<30}{:^10}{:>30}"
       .format(
-        _normalize_for_logging(str(self.source_token(source_seq))),
+        _normalize_for_logging(unicode(self.source_token(source_seq))),
         self.align_type,
-        _normalize_for_logging(str(self.target_token(target_seq))))
+        _normalize_for_logging(unicode(self.target_token(target_seq))))
     )
 
   def __eq__(self, other):
