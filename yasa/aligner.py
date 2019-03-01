@@ -89,14 +89,17 @@ class Alignment(object):
       yield (node.source_token(self.source_seq),
              node.target_token(self.target_seq))
 
+  def __repr__(self):
+    return str(self)
+  
   def __str__(self):
-    return ("size={} len(source)={}, len(target)={}, cost={}, WER={}"
-            .format(self.size(), len(self.source_seq), len(self.target_seq),
-                    self.cost, self.wer())
-            )
+    return self.pretty_print()
 
   def pretty_print(self, source_title='Source', target_title='Target'):
-    pretty = self.__str__() + "\n"
+    pretty = ("size={} len(source)={}, len(target)={}, cost={}, WER={}\n"
+              .format(self.size(), len(self.source_seq), len(self.target_seq),
+                      self.cost, self.wer())
+              )
     pretty += "{:<30}{:^10}{:>30}\n".format(source_title, 'Operation',
                                             target_title)
     pretty += "{:<30}{:^10}{:>30}\n".format('-' * len(source_title), '-' * 9,

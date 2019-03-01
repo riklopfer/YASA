@@ -107,7 +107,7 @@ class WordAlignmentTests(unittest.TestCase):
     source = "this is a test of the beam aligner".split()
     target = "that was a test of the bean aligner".split()
 
-    aligner = yasa.LevinshteinAligner(50, 1, )
+    aligner = yasa.LevinshteinAligner(50, 1)
     word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
@@ -115,19 +115,16 @@ class WordAlignmentTests(unittest.TestCase):
     source = "this is a test of the beam aligner".split() * 2
     target = "that was a test of the bean".split() * 2
 
-    aligner = yasa.NestedLevinshteinAligner(100, 0, )
+    aligner = yasa.NestedLevinshteinAligner(100)
     word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
 
 class TestErrorRates(unittest.TestCase):
-  def test_wer_aligner(self):
-    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-      yasa.align(get_words(source), get_words(target))
 
   def test_error_rates(self):
 
-    aligner = yasa.NestedLevinshteinAligner(100, 1, )
+    aligner = yasa.NestedLevinshteinAligner(100, 1)
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
       source = get_words(source)
@@ -142,7 +139,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s")
 
-    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
     print(alignment)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
@@ -154,7 +151,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
-    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
@@ -165,7 +162,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
-    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
 
     err = yasa.ClassifierErrorRate()
     err.accu_alignment(alignment)

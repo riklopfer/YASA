@@ -1,63 +1,58 @@
-YASA
+YASA (Yet Another Sequence Aligner)
 =================
-
-Yet Another Sequence Aligner
-
-Beam Aligner
-------------
 
 Created to solve the problem of aligning long, *relatively* similar sequences. It may work well
 on less-similar sequences, but that has not been tested yet. 
 
-### Install
+Install
+-------
 
 ```bash
 pip install --upgrade git+https://github.com/riklopfer/YASA/
 ```
 
-### Basic Usage
+Basic Usage
+-----------
 
+Starting with an interactive python prompt. 
+
+Import the module
 ```python
-from __future__ import print_function
 import yasa
+```
 
+Define source and target lists
+```python
 source = "this is a test of the beam aligner".split()
 target = "that was a test of the bean aligner".split()
+```
 
+Create the aligner and perform the alignment
+```python
 # create the aligner
-aligner = yasa.LevinshteinAligner(beam_width=5, heap_size=50)
+aligner = yasa.LevinshteinAligner(heap_size=50, beam_width=5)
 # do the alignment
 word_alignment = aligner.align(source, target)
 # pretty print
-print(word_alignment.pretty_print())
+print(word_alignment)
+```
 
-"""
-size=8 len(source)=8, len(target)=8, cost=3.0, WER=0.375
-Source                        Operation                         Target
-------                        ---------                         ------
-this                             SUB                              that
-is                               SUB                               was
-a                               MATCH                                a
-test                            MATCH                             test
-of                              MATCH                               of
-the                             MATCH                              the
-beam                             SUB                              bean
-aligner                         MATCH                          aligner
-"""
-
-
-# iterate over source-target pairs
+Iterate over source-target pairs in the alignment
+```python
 for src, tgt in word_alignment:
   print("SRC: '{}' TGT: '{}'".format(src, tgt))
-  
-"""
-SRC: 'this' TGT: 'that'
-SRC: 'is' TGT: 'was'
-SRC: 'a' TGT: 'a'
-SRC: 'test' TGT: 'test'
-SRC: 'of' TGT: 'of'
-SRC: 'the' TGT: 'the'
-SRC: 'beam' TGT: 'bean'
-SRC: 'aligner' TGT: 'aligner'
-"""
 ```
+
+If we alter the input to be more poorly aligned, we can use the nested aligner to get a "better" alignment. 
+
+```python
+regular_aligner = yasa.LevinshteinAligner(heap_size=50)
+nested_aligner = yasa.NestedLevinshteinAligner(heap_size=50)
+
+source = "this is a test of the beam aligner".split() * 2
+target = "that was a test of the bean".split() * 2
+
+print(regular_aligner.align(source, target))
+print(nested_aligner.align(source, target))
+
+``` 
