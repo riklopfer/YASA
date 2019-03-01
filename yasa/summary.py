@@ -19,16 +19,16 @@ def error_counts(alignment):
   :rtype: list[(basestring,basestring)]
   """
   # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
-  errors = map(
-      lambda node: Error.construct(node,
-                                   alignment.source_seq,
-                                   alignment.target_seq),
-      alignment.errors())
-  errors.sort()
-  error_counts = map(lambda (k, g): (k, len(list(g))),
-                     itertools.groupby(errors))
-  error_counts.sort(key=lambda (e, c): -c)
-  return error_counts
+  errors = sorted(
+      map(lambda node: Error.construct(node,
+                                       alignment.source_seq,
+                                       alignment.target_seq),
+          alignment.errors()))
+  counts = sorted(
+      map(lambda (k, g): (k, len(list(g))), itertools.groupby(errors)),
+      key=lambda (e, c): -c
+  )
+  return counts
 
 
 class Error(object):

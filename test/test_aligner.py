@@ -5,6 +5,7 @@ import random
 import re
 import unittest
 
+import aligner_data
 import yasa
 
 # do we want randomized results to be reproducible?
@@ -25,46 +26,6 @@ def jumble(tokens):
         swap = tokens[swapx]
         tokens[swapx] = tokens[i]
         tokens[i] = swap
-
-
-def load_declaration():
-  """
-  Load the declaration of independence repeated n times.
-  :return:
-  """
-  print("Loading declaration...", end=' ')
-  with open('declaration.txt', 'rb') as fp:
-    text = fp.read()
-  print("Done")
-  return text
-
-
-WORD_SOURCE_TARGET_PAIRS = [
-  # disproportionately long target
-  ("how many chucks could a wood chuck",
-   "wood chucks are nice animals -- although they will dig holes in your garden. " +
-   "how many chucks could a wood chuck if a wood chuck could chuck wood"),
-  # disproportionately long source
-  (
-    "wood chucks are nice animals -- although they will dig holes in your garden. " +
-    "how many chucks could a wood chuck if a wood chuck could chuck wood",
-    "how many chucks could a wood chuck"),
-  # this will not align
-  ("this is a test", "sailing up wind is hard"),
-  # poor alignment
-  ("bad alignments are bad", "on the other hand, good alignments are good"),
-  # reasonable alignment
-  ("I think this test is fairly reasonable",
-   "I stink this test is fairly unreasonable"),
-  # reasonable alignment + 1
-  ("I think this test is fairly reasonable",
-   "I stink this test is fairly unreasonable right???"),
-  # poor-ish alignment
-  ("no alignment is better than a horrible one?", "i had a horrible headache"),
-  ("this is a little bit tricky", "fishes are a very sticky animal"),
-  ("this is very crappy and this is a little bit tricky",
-   "this is a little bit tricky")
-]
 
 
 def del_some(tokens, del_prob=0.1, m_del_prob=0.4):
@@ -91,7 +52,7 @@ def get_chars(text):
 class WordAlignmentTests(unittest.TestCase):
 
   def test_big_text(self):
-    text = load_declaration() * 3
+    text = (aligner_data.DECLARATION_OF_INDEPENDENCE + u" ") * 3
     target = del_some(get_words(text))
     source = del_some(get_words(text))
     alignment = yasa.align(source, target, heap=100)
@@ -100,7 +61,7 @@ class WordAlignmentTests(unittest.TestCase):
     self.assertEqual(alignment.cost, alignment.errors_n())
 
   def test_default(self):
-    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
+    for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
       yasa.align(get_words(source), get_words(target), scoring='nested')
 
   def test_basic(self):
@@ -119,14 +80,10 @@ class WordAlignmentTests(unittest.TestCase):
     word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
-
-class TestErrorRates(unittest.TestCase):
-
-  def test_error_rates(self):
-
+  def test_error_itr(self):
     aligner = yasa.NestedLevinshteinAligner(100, 1)
 
-    for (source, target) in WORD_SOURCE_TARGET_PAIRS:
+    for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
       source = get_words(source)
       target = get_words(target)
 
@@ -135,6 +92,8 @@ class TestErrorRates(unittest.TestCase):
       for node in alignment.errors():
         print(node.pretty_print(source, target))
 
+
+class ErrorSummary(unittest.TestCase):
   def test_error_counts_1(self):
     source = get_words("a b b a")
     target = get_words("a x x i s")
@@ -157,14 +116,3 @@ class TestErrorRates(unittest.TestCase):
       print('{}\t{}'.format(error, count))
 
     self.assertEqual(3, len(error_counts))
-
-  def test_bad_error_key(self):
-    source = get_words("a b b a")
-    target = get_words("a x x i s s s s s")
-
-    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
-
-    err = yasa.ClassifierErrorRate()
-    err.accu_alignment(alignment)
-
-    print(err.as_string(labels=['a', 'b', 'x', 'bad', 'poopy']))
