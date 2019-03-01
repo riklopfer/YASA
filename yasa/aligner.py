@@ -23,7 +23,6 @@ class Alignment(object):
     :rtype: Alignment
     """
     self.__nodes = final_node.flatten()
-    # self.__nodes.reverse()
 
     self.source_seq = source_seq
     self.target_seq = target_seq
@@ -415,13 +414,11 @@ class Aligner(object):
     # we're at the end of the source sequence, this must be an insertion
     if source_finished:
       next_heap.add(insertion())
-      # print insertion().pretty_print(source, target)
       return
 
     # we're at the end of the target sequence, this must be a deletion
     if target_finished:
       next_heap.add(deletion())
-      # print deletion().pretty_print(source, target)
       return
 
     # match
