@@ -15,7 +15,7 @@ random.seed(98723432)
 def run_aligner(source, target, scoring='levinshtein', pretty=True):
   print(scoring)
   t0 = time.clock()
-  alignment = yasa.align(source, target, scoring=scoring)
+  alignment = yasa.align(source, target, beam=10, heap=1000, scoring=scoring)
   t1 = time.clock()
   if pretty:
     print("+" * 10, "  Alignment Time = {} ms  ".format(
@@ -131,7 +131,11 @@ class WordAlignmentTests(unittest.TestCase):
     text = load_declaration() * 3
     target = del_some(get_words(text))
     source = del_some(get_words(text))
-    run_aligner(source, target, 'nested', True)
+    alignment = yasa.align(source, target, beam=10, heap=1000)
+    print(alignment.pretty_print("source", "target"))
+    # since the default cost per error is 1, this should hold
+    self.assertEqual(alignment.cost, alignment.errors_n())
+
 
   def test_default(self):
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
