@@ -477,7 +477,7 @@ class LevinshteinAligner(Aligner):
     :param heap_size: equivalent
     """
     super(LevinshteinAligner, self).__init__(LevinshteinScoring(),
-                                             heap_size, beam_width )
+                                             heap_size, beam_width)
 
 
 class NestedLevinshteinScoring(Scoring):

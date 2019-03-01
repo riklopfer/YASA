@@ -7,4 +7,7 @@ setup(name='YASA',
       author_email='russell@klopfer.us',
       url='https://github.com/riklopfer/YASA',
       packages=['yasa'],
+      install_requires=[
+        'repoze.lru'
+      ]
       )

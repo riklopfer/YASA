@@ -12,7 +12,7 @@ on less-similar sequences, but that has not been tested yet.
 ### Install
 
 ```bash
-pip install --upgrade https://github.com/riklopfer/YASA/archive/master.zip
+pip install --upgrade git+https://github.com/riklopfer/YASA/
 ```
 
 ### Basic Usage
