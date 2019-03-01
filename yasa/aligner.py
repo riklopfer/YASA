@@ -2,6 +2,7 @@
 beam_aligner
 Author: Russell Klopfer
 """
+from __future__ import division
 
 from repoze.lru import lru_cache
 
@@ -38,6 +39,7 @@ class Alignment(object):
     """
     Get all the errors in the alignment
     :return:
+    :rtype: list[AlignmentNode]
     """
 
     def is_error(node):
@@ -77,7 +79,7 @@ class Alignment(object):
     :return: word error rate
     :rtype: float
     """
-    err_n = float(self.errors_n())
+    err_n = self.errors_n()
     if err_n:
       return err_n / (err_n + self.correct_n())
     else:
@@ -93,11 +95,6 @@ class Alignment(object):
             .format(self.size(), len(self.source_seq), len(self.target_seq),
                     self.cost, self.wer())
             )
-
-  @staticmethod
-  def normalize_for_logging(s):
-    return s.replace("\n", "\\n").replace(' ',
-                                          '<sp>') if s is not None else None
 
   def pretty_print(self, source_title='Source', target_title='Target'):
     pretty = self.__str__() + "\n"
@@ -121,6 +118,13 @@ class AlignmentType:
   DEL = "DEL"
 
 
+def _normalize_for_logging(s):
+  if not s:
+    return s
+
+  return s.replace("\n", "\\n").replace(' ', '<sp>')
+
+
 class AlignmentNode(object):
   def __init__(self, align_type, previous, source_pos, target_pos, cost):
     """
@@ -130,8 +134,14 @@ class AlignmentNode(object):
     self.align_type = align_type
     self.previous = previous
     self.cost = cost
-    self.sourcePos = source_pos
-    self.targetPos = target_pos
+    self.source_pos = source_pos
+    self.target_pos = target_pos
+
+  def _trace_back(self):
+    current = self
+    while current != Aligner.START_NODE:
+      yield current
+      current = current.previous
 
   def flatten(self):
     """
@@ -139,36 +149,30 @@ class AlignmentNode(object):
     :return:
     :rtype: list
     """
-    flat = []
-    current = self
-    while current != Aligner.START_NODE:
-      flat.insert(0, current)
-      # flat.append(current)
-      current = current.previous
-    return flat
+    return list(self._trace_back())[::-1]
 
   def is_source_end(self, source):
-    return self.sourcePos >= len(source) - 1
+    return self.source_pos >= len(source) - 1
 
   def is_target_end(self, target):
-    return self.targetPos >= len(target) - 1
+    return self.target_pos >= len(target) - 1
 
   def source_token(self, source_seq, empty=None):
     if self.align_type == AlignmentType.INS:
       return empty
-    return source_seq[self.sourcePos]
+    return source_seq[self.source_pos]
 
   def target_token(self, target_seq, empty=None):
     if self.align_type == AlignmentType.DEL:
       return empty
-    return target_seq[self.targetPos]
+    return target_seq[self.target_pos]
 
   def pretty_print(self, source_seq, target_seq):
     return ("{:<30}{:^10}{:>30}"
       .format(
-        Alignment.normalize_for_logging(str(self.source_token(source_seq))),
+        _normalize_for_logging(str(self.source_token(source_seq))),
         self.align_type,
-        Alignment.normalize_for_logging(str(self.target_token(target_seq))))
+        _normalize_for_logging(str(self.target_token(target_seq))))
     )
 
   def __eq__(self, other):
@@ -177,8 +181,8 @@ class AlignmentNode(object):
     return (
         self.previous == other.previous and
         self.cost == other.cost and
-        self.sourcePos == other.sourcePos and
-        self.targetPos == other.targetPos
+        self.source_pos == other.sourcePos and
+        self.target_pos == other.targetPos
     )
 
   def __repr__(self):
@@ -186,7 +190,39 @@ class AlignmentNode(object):
 
   def __str__(self):
     return "{type: %s, source_pos: %d, target_pos: %d, cost: %d}" % (
-      self.align_type, self.sourcePos, self.targetPos, self.cost)
+      self.align_type, self.source_pos, self.target_pos, self.cost)
+
+
+class Insertion(AlignmentNode):
+  def __init__(self, previous, cost):
+    super(Insertion, self).__init__(AlignmentType.INS, previous,
+                                    previous.source_pos,
+                                    previous.target_pos + 1,
+                                    previous.cost + cost)
+
+
+class Deletion(AlignmentNode):
+  def __init__(self, previous, cost):
+    super(Deletion, self).__init__(AlignmentType.DEL, previous,
+                                   previous.source_pos + 1,
+                                   previous.target_pos,
+                                   previous.cost + cost)
+
+
+class Substitution(AlignmentNode):
+  def __init__(self, previous, cost):
+    super(Substitution, self).__init__(AlignmentType.SUB, previous,
+                                       previous.source_pos + 1,
+                                       previous.target_pos + 1,
+                                       previous.cost + cost)
+
+
+class Match(AlignmentNode):
+  def __init__(self, previous, cost):
+    super(Match, self).__init__(AlignmentType.MATCH, previous,
+                                previous.source_pos + 1,
+                                previous.target_pos + 1,
+                                previous.cost + cost)
 
 
 class Scoring(object):
@@ -200,10 +236,10 @@ class Scoring(object):
     raise NotImplementedError
 
   def match(self, token):
-    return 0.
+    raise NotImplementedError
 
 
-class _HeapThing(object):
+class NodeHeap(object):
   def __init__(self, beam, max_size):
     """
     :type beam: float
@@ -221,7 +257,7 @@ class _HeapThing(object):
     return len(self._node_list)
 
   def __iter__(self):
-    self._sort()
+    self._sort_nodes()
     for node in self._node_list:
       yield node
 
@@ -254,7 +290,7 @@ class _HeapThing(object):
     self._is_sorted = False
     self._node_list.append(node)
 
-  def _sort(self):
+  def _sort_nodes(self):
     if self._is_sorted:
       return
 
@@ -264,12 +300,12 @@ class _HeapThing(object):
   @property
   def top(self):
     """:rtype: AlignmentNode"""
-    self._sort()
+    self._sort_nodes()
     return self._node_list[0]
 
   def prune(self):
     """Prune the list"""
-    self._sort()
+    self._sort_nodes()
     if self._beam > 0:
       best = self.top.cost
       idx = 1
@@ -286,7 +322,6 @@ class _HeapThing(object):
 class Aligner(object):
   # Constants
   START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0.)
-  MAX_BEAM_SIZE = 50000
 
   def __init__(self, beam_width, heap_size, scorer):
     """
@@ -306,7 +341,7 @@ class Aligner(object):
     self.scorer = scorer
 
   def _new_heap(self):
-    return _HeapThing(self.beam_width, self.heap_size)
+    return NodeHeap(self.beam_width, self.heap_size)
 
   def __str__(self):
     return ("beam_width: {}, heap_size: {}, scorer: {}".
@@ -317,55 +352,60 @@ class Aligner(object):
 
     :param source:
     :param target:
+    :type source: list
+    :type target: list
     :return:
     :rtype: Alignment
     """
     current_heap = self._new_heap()
     current_heap.add(Aligner.START_NODE)
 
-    while (current_heap.top.sourcePos < len(source) - 1 or
-           current_heap.top.targetPos < len(target) - 1):
+    while (current_heap.top.source_pos < len(source) - 1 or
+           current_heap.top.target_pos < len(target) - 1):
       next_heap = self._new_heap()
       for node in current_heap:
-        self._populate_nodes(next_heap, node, source, target)
+        self._expand_from_node(next_heap, node, source, target)
       next_heap.prune()
       current_heap = next_heap
-      # current_heap = Aligner._prune(next_heap, self.beam_width, self.heap_size)
-      # print(Aligner.heap_to_string(current_heap, source, target, 5))
-      # pass
 
     return Alignment(current_heap.top, source, target)
 
-  def _populate_nodes(self, next_heap, previous_node, source, target):
-    source_x = previous_node.sourcePos
-    target_x = previous_node.targetPos
+  def _expand_from_node(self, next_heap, previous_node, source, target):
+    """
+    Create new nodes pointing back to previous_node and place them in next_heap.
+
+    :type next_heap: NodeHeap
+    :type previous_node: AlignmentNode
+    :type source: list
+    :type target: list
+
+    :param next_heap:
+    :param previous_node:
+    :param source:
+    :param target:
+    """
+    source_x = previous_node.source_pos
+    target_x = previous_node.target_pos
     source_finished = source_x >= len(source) - 1
     target_finished = target_x >= len(target) - 1
 
     def insertion():
-      return AlignmentNode(AlignmentType.INS, previous_node, source_x,
-                           target_x + 1,
-                           previous_node.cost + self.scorer.insertion(
-                               target[target_x]))
+      return Insertion(previous_node,
+                       self.scorer.insertion(target[target_x]))
 
     def deletion():
-      return AlignmentNode(AlignmentType.DEL, previous_node, source_x + 1,
-                           target_x,
-                           previous_node.cost + self.scorer.deletion(
-                               source[source_x]))
+      return Deletion(previous_node,
+                      self.scorer.deletion(source[source_x]))
 
     def match():
-      return AlignmentNode(AlignmentType.MATCH, previous_node, source_x + 1,
-                           target_x + 1,
-                           previous_node.cost + self.scorer.match(
-                               source[source_x]))
+      return Match(previous_node,
+                   self.scorer.match(source[source_x]))
 
     def substitution():
-      return AlignmentNode(AlignmentType.SUB, previous_node, source_x + 1,
-                           target_x + 1,
-                           previous_node.cost + self.scorer.substitution(
-                               source[source_x + 1],
-                               target[target_x + 1]))
+      return Substitution(previous_node,
+                          self.scorer.substitution(source[source_x + 1],
+                                                   target[target_x + 1])
+                          )
 
     # we're at the end of the alignment already
     if source_finished and target_finished:
@@ -397,16 +437,22 @@ class Aligner(object):
     next_heap.add(deletion())
 
 
+"""
+Scoring / Aligner Implementations
+"""
+
+
 class LevinshteinScoring(Scoring):
   """
   Levinshtein distance
   """
 
-  def __init__(self, ins_cost=1, del_cost=1, sub_cost=1):
+  def __init__(self, ins_cost=1, del_cost=1, sub_cost=1, match_cost=0):
     super(LevinshteinScoring, self).__init__()
     self.ins_cost = ins_cost
     self.del_cost = del_cost
     self.sub_cost = sub_cost
+    self.match_cost = match_cost
 
   def substitution(self, source, target):
     return self.sub_cost
@@ -417,10 +463,8 @@ class LevinshteinScoring(Scoring):
   def insertion(self, token):
     return self.ins_cost
 
-
-"""
-Scoring / Aligner Implementations
-"""
+  def match(self, token):
+    return self.match_cost
 
 
 class LevinshteinAligner(Aligner):
@@ -437,31 +481,6 @@ class LevinshteinAligner(Aligner):
     """
     super(LevinshteinAligner, self).__init__(beam_width, heap_size,
                                              LevinshteinScoring())
-
-
-class NestedAlignmentScoring(Scoring):
-  """
-  Cost of deletions and insertions will be equal to the length of the token.
-  Cost of substitutions will be the cost of the alignment according to the
-  nested aligner.
-  """
-
-  def __init__(self, aligner):
-    """
-    :param aligner: aligner to determine the cost of substitutions
-    :type aligner: Aligner
-    """
-    super(NestedAlignmentScoring, self).__init__()
-    self._aligner = aligner
-
-  def deletion(self, token):
-    return len(token)
-
-  def insertion(self, token):
-    return len(token)
-
-  def substitution(self, source, target):
-    return self._aligner.align(source, target).cost
 
 
 class NestedLevinshteinScoring(Scoring):
