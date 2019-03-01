@@ -323,7 +323,7 @@ class Aligner(object):
   # Constants
   START_NODE = AlignmentNode(AlignmentType.START, None, -1, -1, 0.)
 
-  def __init__(self, beam_width, heap_size, scorer):
+  def __init__(self, scorer, heap_size, beam_width):
     """
     Construct a new aligner with the given parameters.
     :param beam_width: beam width (0 -> infinite)
@@ -473,20 +473,20 @@ class LevinshteinAligner(Aligner):
   distance
   """
 
-  def __init__(self, beam_width, heap_size):
+  def __init__(self, heap_size, beam_width=0):
     """
     Constructor
     :param beam_width:
     :param heap_size: equivalent
     """
-    super(LevinshteinAligner, self).__init__(beam_width, heap_size,
-                                             LevinshteinScoring())
+    super(LevinshteinAligner, self).__init__(LevinshteinScoring(),
+                                             heap_size, beam_width )
 
 
 class NestedLevinshteinScoring(Scoring):
-  def __init__(self, beam_width, heap_size):
+  def __init__(self, heap_size, beam_width):
     super(NestedLevinshteinScoring, self).__init__()
-    self._aligner = LevinshteinAligner(beam_width, heap_size)
+    self._aligner = LevinshteinAligner(heap_size, beam_width)
 
   def deletion(self, token):
     return len(token)
@@ -509,12 +509,12 @@ class NestedLevinshteinAligner(Aligner):
   distance between individual tokens.
   """
 
-  def __init__(self, beam_width, heap_size):
+  def __init__(self, heap_size, beam_width=0):
     """
     Constructor
     :param beam_width:
     :param heap_size:
     """
     super(NestedLevinshteinAligner,
-          self).__init__(beam_width, heap_size,
-                         NestedLevinshteinScoring(5, 10))
+          self).__init__(NestedLevinshteinScoring(10, 0),
+                         heap_size, beam_width)

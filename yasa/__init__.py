@@ -5,7 +5,7 @@ from aligner import NestedLevinshteinAligner, LevinshteinAligner, Aligner, Scori
 
 from summary import ClassifierErrorRate, LabelErrorRate, error_counts
 
-def __mk_aligner(beam, heap, scoring):
+def __mk_aligner(heap, beam, scoring):
   """
   :type beam: int
   :type heap: int
@@ -19,17 +19,17 @@ def __mk_aligner(beam, heap, scoring):
   """
   scoring = scoring.lower()
   if scoring == 'levinshtein':
-    return LevinshteinAligner(beam, heap)
+    return LevinshteinAligner(heap, beam)
   elif scoring == 'nested':
-    return NestedLevinshteinAligner(beam, heap)
+    return NestedLevinshteinAligner(heap, beam)
   else:
     raise ValueError(u"Unknown scoring type: '{}'".format(scoring))
 
 
-def align(source, target, beam=5, heap=100, scoring='levinshtein'):
+def align(source, target, heap=100, beam=0, scoring='levinshtein'):
   """
-  :type source: list[basestring]
-  :type target: list[basestring]
+  :type source: list
+  :type target: list
   :type beam: int
   :type heap: int
   :type scoring: basestring
@@ -42,4 +42,4 @@ def align(source, target, beam=5, heap=100, scoring='levinshtein'):
   :param scoring:
   :return:
   """
-  return __mk_aligner(beam, heap, scoring).align(source, target)
+  return __mk_aligner(heap, beam, scoring).align(source, target)

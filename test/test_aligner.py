@@ -3,7 +3,6 @@ from __future__ import print_function
 
 import random
 import re
-import time
 import unittest
 
 import yasa
@@ -12,45 +11,9 @@ import yasa
 random.seed(98723432)
 
 
-def run_aligner(source, target, scoring='levinshtein', pretty=True):
-  print(scoring)
-  t0 = time.clock()
-  alignment = yasa.align(source, target, beam=10, heap=100, scoring=scoring)
-  t1 = time.clock()
-  if pretty:
-    print("+" * 10, "  Alignment Time = {} ms  ".format(
-        (t1 - t0) * 1000), "+" * 10)
-    print(alignment.pretty_print())
-    print(alignment)
-    print("+" * 10, "  Alignment Time = {} ms  ".format(
-        (t1 - t0) * 1000), "+" * 10)
-    print()
-    summary = yasa.ClassifierErrorRate()
-    summary.accu_alignment(alignment)
-    print(summary)
-  else:
-    print(alignment)
-
-  print()
-  return alignment
-
-
 class TestNonStringAlignment(unittest.TestCase):
   def test_non_string_alignment(self):
-    run_aligner([1, 2, 3], [2, 2, 3, 3], 'levinshtein')
-
-
-def run_wer_aligner(source, target, pretty=True):
-  """
-  Test Word Error Rate aligner
-
-  :param source:
-  :param target:
-  :param pretty:
-  :return:
-  :rtype: None
-  """
-  run_aligner(source, target, pretty=pretty)
+    yasa.align([1, 2, 3], [2, 2, 3, 3], scoring='levinshtein')
 
 
 def jumble(tokens):
@@ -131,21 +94,20 @@ class WordAlignmentTests(unittest.TestCase):
     text = load_declaration() * 3
     target = del_some(get_words(text))
     source = del_some(get_words(text))
-    alignment = yasa.align(source, target, beam=10, heap=100)
+    alignment = yasa.align(source, target, heap=100)
     print(alignment.pretty_print("source", "target"))
     # since the default cost per error is 1, this should hold
     self.assertEqual(alignment.cost, alignment.errors_n())
 
-
   def test_default(self):
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-      run_aligner(get_words(source), get_words(target), 'nested')
+      yasa.align(get_words(source), get_words(target), scoring='nested')
 
   def test_basic(self):
     source = "this is a test of the beam aligner".split()
     target = "that was a test of the bean aligner".split()
 
-    aligner = yasa.LevinshteinAligner(1, 50)
+    aligner = yasa.LevinshteinAligner(50, 1, )
     word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
@@ -153,7 +115,7 @@ class WordAlignmentTests(unittest.TestCase):
     source = "this is a test of the beam aligner".split() * 2
     target = "that was a test of the bean".split() * 2
 
-    aligner = yasa.NestedLevinshteinAligner(0, 100)
+    aligner = yasa.NestedLevinshteinAligner(100, 0, )
     word_alignment = aligner.align(source, target)
     print(word_alignment.pretty_print())
 
@@ -161,11 +123,11 @@ class WordAlignmentTests(unittest.TestCase):
 class TestErrorRates(unittest.TestCase):
   def test_wer_aligner(self):
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
-      run_wer_aligner(get_words(source), get_words(target))
+      yasa.align(get_words(source), get_words(target))
 
   def test_error_rates(self):
 
-    aligner = yasa.NestedLevinshteinAligner(1, 100)
+    aligner = yasa.NestedLevinshteinAligner(100, 1, )
 
     for (source, target) in WORD_SOURCE_TARGET_PAIRS:
       source = get_words(source)
@@ -180,7 +142,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s")
 
-    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
     print(alignment)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
@@ -192,7 +154,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
-    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
@@ -203,7 +165,7 @@ class TestErrorRates(unittest.TestCase):
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
-    alignment = yasa.LevinshteinAligner(1, 10).align(source, target)
+    alignment = yasa.LevinshteinAligner(10, 1, ).align(source, target)
 
     err = yasa.ClassifierErrorRate()
     err.accu_alignment(alignment)
