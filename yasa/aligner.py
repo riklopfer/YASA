@@ -4,7 +4,9 @@ Author: Russell Klopfer
 """
 from __future__ import division
 
-from repoze.lru import lru_cache
+# from repoze.lru import lru_cache
+
+from functools import lru_cache
 
 __all__ = ['Aligner', 'Scoring',
            'LevinshteinAligner',
@@ -46,7 +48,7 @@ class Alignment(object):
               node.align_type == AlignmentType.INS or
               node.align_type == AlignmentType.DEL)
 
-    return filter(is_error, self.__nodes)
+    return [n for n in self.__nodes if is_error(n)]
 
   def errors_n(self):
     """
@@ -59,7 +61,7 @@ class Alignment(object):
     return len(self.errors())
 
   def matches(self):
-    return filter(lambda n: n.align_type == AlignmentType.MATCH, self.__nodes)
+    return [n for n in self.__nodes if n.align_type == AlignmentType.MATCH]
 
   def correct_n(self):
     """
@@ -172,9 +174,9 @@ class AlignmentNode(object):
   def pretty_print(self, source_seq, target_seq):
     return (u"{:<30}{:^10}{:>30}"
       .format(
-        _normalize_for_logging(unicode(self.source_token(source_seq))),
+        _normalize_for_logging(str(self.source_token(source_seq))),
         self.align_type,
-        _normalize_for_logging(unicode(self.target_token(target_seq))))
+        _normalize_for_logging(str(self.target_token(target_seq))))
     )
 
   def __eq__(self, other):
@@ -183,8 +185,8 @@ class AlignmentNode(object):
     return (
         self.previous == other.previous and
         self.cost == other.cost and
-        self.source_pos == other.sourcePos and
-        self.target_pos == other.targetPos
+        self.source_pos == other.source_pos and
+        self.target_pos == other.target_pos
     )
 
   def __repr__(self):
@@ -311,7 +313,7 @@ class NodeHeap(object):
     if self._beam > 0:
       best = self.top.cost
       idx = 1
-      for idx in xrange(1, len(self)):
+      for idx in range(1, len(self)):
         if self._node_list[idx].cost > best + self._beam:
           break
       assert idx > 0

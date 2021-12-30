@@ -30,7 +30,7 @@ def jumble(tokens):
 
 def del_some(tokens, del_prob=0.1, m_del_prob=0.4):
   new_tokens = []
-  for i in xrange(len(tokens)):
+  for i in range(len(tokens)):
     if random.random() > del_prob:
       # match here
       new_tokens.append(tokens[i])
@@ -104,7 +104,7 @@ class ErrorSummary(unittest.TestCase):
     for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
 
-    self.assertEqual(3, len(error_counts))
+    self.assertEqual(2, len(error_counts))
 
   def test_error_counts_2(self):
     source = get_words("a b b a")
@@ -115,4 +115,4 @@ class ErrorSummary(unittest.TestCase):
     for (error, count) in error_counts:
       print('{}\t{}'.format(error, count))
 
-    self.assertEqual(3, len(error_counts))
+    self.assertEqual(2, len(error_counts))

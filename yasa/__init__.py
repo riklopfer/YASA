@@ -1,9 +1,9 @@
-import aligner
-import summary
+from yasa import aligner
+from yasa import summary
 
-from aligner import NestedLevinshteinAligner, LevinshteinAligner, Aligner, Scoring
+from .aligner import NestedLevinshteinAligner, LevinshteinAligner, Aligner, Scoring
 
-from summary import ClassifierErrorRate, LabelErrorRate, error_counts
+from .summary import ClassifierErrorRate, LabelErrorRate, error_counts
 
 def __mk_aligner(heap, beam, scoring):
   """

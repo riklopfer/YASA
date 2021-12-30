@@ -24,11 +24,15 @@ def error_counts(alignment):
                                        alignment.source_seq,
                                        alignment.target_seq),
           alignment.errors()))
-  counts = sorted(
-      map(lambda (k, g): (k, len(list(g))), itertools.groupby(errors)),
-      key=lambda (e, c): -c
-  )
-  return counts
+
+  ec = [(g,len(list(b))) for g,b in itertools.groupby(errors, lambda _:_.align_type)]
+  return sorted(ec, key=lambda kv:-kv[1])
+
+  # counts = sorted(
+  #     map(lambda k,g: (k, len(list(g))), itertools.groupby(errors)),
+  #     key=lambda e,c: -c
+  # )
+  # return counts
 
 
 class Error(object):
