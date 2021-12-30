@@ -49,70 +49,72 @@ def get_chars(text):
     return [c for c in text]
 
 
-class WordAlignmentTests(unittest.TestCase):
-
-    def test_big_text(self):
-        text = (aligner_data.DECLARATION_OF_INDEPENDENCE + u" ") * 3
-        target = del_some(get_words(text))
-        source = del_some(get_words(text))
-        alignment = yasa.align(source, target, heap=100)
-        print(alignment.pretty_print("source", "target"))
-        # since the default cost per error is 1, this should hold
-        self.assertEqual(alignment.cost, alignment.errors_n())
-
-    def test_default(self):
-        for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
-            yasa.align(get_words(source), get_words(target), scoring='nested')
-
-    def test_basic(self):
-        source = "this is a test of the beam aligner".split()
-        target = "that was a test of the bean aligner".split()
-
-        aligner = yasa.LevinshteinAligner(50, 1)
-        word_alignment = aligner.align(source, target)
-        print(word_alignment.pretty_print())
-
-    def test_basic_nested(self):
-        source = "this is a test of the beam aligner".split() * 2
-        target = "that was a test of the bean".split() * 2
-
-        aligner = yasa.NestedLevinshteinAligner(100)
-        word_alignment = aligner.align(source, target)
-        print(word_alignment.pretty_print())
-
-    def test_error_itr(self):
-        aligner = yasa.NestedLevinshteinAligner(100, 1)
-
-        for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
-            source = get_words(source)
-            target = get_words(target)
-
-            alignment = aligner.align(source, target)
-            print(alignment)
-            for node in alignment.errors():
-                print(node.pretty_print(source, target))
+def test_big_text():
+    text = (aligner_data.DECLARATION_OF_INDEPENDENCE + u" ") * 3
+    target = del_some(get_words(text))
+    source = del_some(get_words(text))
+    alignment = yasa.align(source, target, heap=100)
+    print(alignment.pretty_print("source", "target"))
+    # since the default cost per error is 1, this should hold
+    assert alignment.cost == alignment.errors_n()
 
 
-class ErrorSummary(unittest.TestCase):
-    def test_error_counts_1(self):
-        source = get_words("a b b a")
-        target = get_words("a x x i s")
+def test_default():
+    for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
+        yasa.align(get_words(source), get_words(target), scoring='nested')
 
-        alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
+
+def test_basic():
+    source = "this is a test of the beam aligner".split()
+    target = "that was a test of the bean aligner".split()
+
+    aligner = yasa.LevinshteinAligner(50, 1)
+    word_alignment = aligner.align(source, target)
+    print(word_alignment.pretty_print())
+
+
+def test_basic_nested():
+    source = "this is a test of the beam aligner".split() * 2
+    target = "that was a test of the bean".split() * 2
+
+    aligner = yasa.NestedLevinshteinAligner(100)
+    word_alignment = aligner.align(source, target)
+    print(word_alignment.pretty_print())
+
+
+def test_error_itr():
+    aligner = yasa.NestedLevinshteinAligner(100, 1)
+
+    for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
+        source = get_words(source)
+        target = get_words(target)
+
+        alignment = aligner.align(source, target)
         print(alignment)
-        error_counts = yasa.error_counts(alignment)
-        for (error, count) in error_counts:
-            print('{}\t{}'.format(error, count))
+        for node in alignment.errors():
+            print(node.pretty_print(source, target))
 
-        self.assertEqual(2, len(error_counts))
 
-    def test_error_counts_2(self):
-        source = get_words("a b b a")
-        target = get_words("a x x i s s s s s")
+def test_error_counts_1():
+    source = get_words("a b b a")
+    target = get_words("a x x i s")
 
-        alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
-        error_counts = yasa.error_counts(alignment)
-        for (error, count) in error_counts:
-            print('{}\t{}'.format(error, count))
+    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
+    print(alignment)
+    error_counts = yasa.error_counts(alignment)
+    for (error, count) in error_counts:
+        print('{}\t{}'.format(error, count))
 
-        self.assertEqual(2, len(error_counts))
+    assert 2 == len(error_counts)
+
+
+def test_error_counts_2():
+    source = get_words("a b b a")
+    target = get_words("a x x i s s s s s")
+
+    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
+    error_counts = yasa.error_counts(alignment)
+    for (error, count) in error_counts:
+        print('{}\t{}'.format(error, count))
+
+    assert 2 == len(error_counts)
