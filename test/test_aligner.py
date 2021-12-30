@@ -18,7 +18,7 @@ class TestNonStringAlignment(unittest.TestCase):
 
 
 def jumble(tokens):
-    for i in xrange(len(tokens) - 1):
+    for i in range(len(tokens) - 1):
         if random.random() < 0.1:
             # only let the sapping take place N tokens apart
             swapx = random.randint(i + 1, min(i + 1 + 5, len(tokens) - 1))
@@ -50,7 +50,8 @@ def get_chars(text):
 
 
 def test_big_text():
-    text = (aligner_data.DECLARATION_OF_INDEPENDENCE + u" ") * 3
+    text = aligner_data.load_declaration()
+    text = (text + u" ") * 3
     target = del_some(get_words(text))
     source = del_some(get_words(text))
     alignment = yasa.align(source, target, heap=100)
