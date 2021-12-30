@@ -16,23 +16,15 @@ def error_counts(alignment):
     Count errors.
     :type alignment: aligner.Alignment
     :return: (error, count) pairs
-    :rtype: list[(basestring,basestring)]
+    :rtype: list[(str,int)]
     """
-    # strings = map(lambda e: e.pretty_print(self.source_seq, self.target_seq), self.errors())
-    errors = sorted(
-        map(lambda node: Error.construct(node,
-                                         alignment.source_seq,
-                                         alignment.target_seq),
-            alignment.errors()))
+    errors = [Error.construct(n, alignment.source_seq, alignment.target_seq)
+              for n in alignment.errors()]
 
-    ec = [(g, len(list(b))) for g, b in itertools.groupby(errors, lambda _: _.align_type)]
-    return sorted(ec, key=lambda kv: -kv[1])
-
-    # counts = sorted(
-    #     map(lambda k,g: (k, len(list(g))), itertools.groupby(errors)),
-    #     key=lambda e,c: -c
-    # )
-    # return counts
+    counts = [(errtype, len(list(errs)))
+              for errtype, errs
+              in itertools.groupby(errors, lambda _: _.align_type)]
+    return sorted(counts, key=lambda kv: -kv[1])
 
 
 class Error(object):
