@@ -3,7 +3,7 @@ from __future__ import division
 import itertools
 
 __all__ = ['LabelErrorRate', 'ClassifierErrorRate', 'WordErrorRate',
-           'ERROR_RATE_HEADER']
+           'error_counts']
 
 _error_rate_header_format = '{:<32}{:<12}{:<12}{:<12}{:<12}'
 ERROR_RATE_HEADER = _error_rate_header_format.format('Label', 'Precision',
