@@ -54,7 +54,7 @@ def test_big_text():
     text = (text + u" ") * 3
     target = del_some(get_words(text))
     source = del_some(get_words(text))
-    alignment = yasa.align(source, target, heap=100)
+    alignment = yasa.align(source, target, heap_size=100)
     print(alignment.pretty_print("source", "target"))
     # since the default cost per error is 1, this should hold
     assert alignment.cost == alignment.errors_n()

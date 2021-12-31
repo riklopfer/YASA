@@ -6,8 +6,6 @@ from __future__ import division
 
 from functools import lru_cache
 
-# from repoze.lru import lru_cache
-
 __all__ = ['Aligner', 'Scoring',
            'LevinshteinAligner',
            'NestedLevinshteinAligner']
@@ -173,9 +171,9 @@ class AlignmentNode(object):
 
     def pretty_print(self, source_seq, target_seq):
         return u"{:<30}{:^10}{:>30}".format(
-                _normalize_for_logging(str(self.source_token(source_seq))),
-                self.align_type,
-                _normalize_for_logging(str(self.target_token(target_seq))))
+            _normalize_for_logging(str(self.source_token(source_seq))),
+            self.align_type,
+            _normalize_for_logging(str(self.target_token(target_seq))))
 
     def __eq__(self, other):
         if other is None:
@@ -225,20 +223,6 @@ class Match(AlignmentNode):
                                     previous.source_pos + 1,
                                     previous.target_pos + 1,
                                     previous.cost + cost)
-
-
-class Scoring(object):
-    def insertion(self, token):
-        raise NotImplementedError
-
-    def deletion(self, token):
-        raise NotImplementedError
-
-    def substitution(self, source, target):
-        raise NotImplementedError
-
-    def match(self, token):
-        raise NotImplementedError
 
 
 class NodeHeap(object):
@@ -451,13 +435,23 @@ Scoring / Aligner Implementations
 """
 
 
-class LevinshteinScoring(Scoring):
-    """
-    Levinshtein distance
-    """
+class Scoring(object):
+    def insertion(self, token):
+        raise NotImplementedError
 
-    def __init__(self, ins_cost=1, del_cost=1, sub_cost=1, match_cost=0):
-        super(LevinshteinScoring, self).__init__()
+    def deletion(self, token):
+        raise NotImplementedError
+
+    def substitution(self, source, target):
+        raise NotImplementedError
+
+    def match(self, token):
+        raise NotImplementedError
+
+
+class FixedScoring(Scoring):
+    def __init__(self, ins_cost: float, del_cost: float, sub_cost: float, match_cost: float):
+        super(Scoring, self).__init__()
         self.ins_cost = ins_cost
         self.del_cost = del_cost
         self.sub_cost = sub_cost
@@ -476,13 +470,22 @@ class LevinshteinScoring(Scoring):
         return self.match_cost
 
 
+class LevinshteinScoring(FixedScoring):
+    """
+    Standard Levinshtein distance
+    """
+
+    def __init__(self):
+        super(LevinshteinScoring, self).__init__(1, 1, 1, 0)
+
+
 class LevinshteinAligner(Aligner):
     """
     Aligner that that produces alignments with cost equal to the Levinshtein
     distance
     """
 
-    def __init__(self, heap_size, beam_width=0):
+    def __init__(self, heap_size: int, beam_width: int = 0):
         """
         Constructor
         :param beam_width:
