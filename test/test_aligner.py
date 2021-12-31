@@ -69,8 +69,7 @@ def test_basic():
     source = "this is a test of the beam aligner".split()
     target = "that was a test of the bean aligner".split()
 
-    aligner = yasa.LevinshteinAligner(50, 1)
-    word_alignment = aligner.align(source, target)
+    word_alignment = yasa.align(source, target, 50, 1)
     print(word_alignment.pretty_print())
 
 
@@ -78,19 +77,16 @@ def test_basic_nested():
     source = "this is a test of the beam aligner".split() * 2
     target = "that was a test of the bean".split() * 2
 
-    aligner = yasa.NestedLevinshteinAligner(100)
-    word_alignment = aligner.align(source, target)
+    word_alignment = yasa.align(source, target, 100, scoring='nested')
     print(word_alignment.pretty_print())
 
 
 def test_error_itr():
-    aligner = yasa.NestedLevinshteinAligner(100, 1)
-
     for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
         source = get_words(source)
         target = get_words(target)
 
-        alignment = aligner.align(source, target)
+        alignment = yasa.align(source, target, 100, 1)
         print(alignment)
         for node in alignment.errors():
             print(node.pretty_print(source, target))
@@ -100,7 +96,7 @@ def test_error_counts_1():
     source = get_words("a b b a")
     target = get_words("a x x i s")
 
-    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
+    alignment = yasa.align(source, target, 100, 1)
     print(alignment)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
@@ -113,7 +109,7 @@ def test_error_counts_2():
     source = get_words("a b b a")
     target = get_words("a x x i s s s s s")
 
-    alignment = yasa.LevinshteinAligner(10, 1).align(source, target)
+    alignment = yasa.align(source, target, 10, 1)
     error_counts = yasa.error_counts(alignment)
     for (error, count) in error_counts:
         print('{}\t{}'.format(error, count))
