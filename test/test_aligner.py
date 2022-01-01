@@ -62,7 +62,8 @@ def test_big_text():
 
 def test_default():
     for (source, target) in aligner_data.WORD_SOURCE_TARGET_PAIRS:
-        yasa.align(get_words(source), get_words(target), scoring='nested')
+        result = yasa.align(get_words(source), get_words(target), scoring='nested')
+        pass
 
 
 def test_basic():
